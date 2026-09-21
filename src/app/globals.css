@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+:root {
+  --bg-museum: #09090b;
+  --bg-surface: #121216;
+  --bg-plinth: #1a1a20;
+  --text-primary: #f4f4f6;
+  --text-secondary: #93939f;
+  --text-muted: #5b5b66;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --accent-gold: #c5a880;
+}
+
+body {
+  background-color: var(--bg-museum);
+  color: var(--text-primary);
+  font-family: -apple-system, BlinkMacSystemFont, "Pretendard", "Noto Serif KR", "Times New Roman", serif;
+  overflow-x: hidden;
+  letter-spacing: -0.01em;
+  selection-background-color: rgba(197, 168, 128, 0.25);
+  selection-color: #ffffff;
+}
+
+::selection {
+  background: rgba(197, 168, 128, 0.25);
+  color: #ffffff;
+}
+
+/* Elegant Architectural Scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #23232a;
+  border-radius: 2px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #444452;
+}
+
+/* Museum Plinth & Surface Gradients */
+.museum-plinth {
+  background: linear-gradient(180deg, #18181f 0%, #0f0f13 100%);
+  border: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.museum-caption-card {
+  background: rgba(18, 18, 22, 0.7);
+  backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.serif-title {
+  font-family: "Didot", "Bodoni MT", "Cinzel", "Noto Serif KR", Georgia, serif;
+}
+
+.editorial-number {
+  font-family: "Didot", "Bodoni MT", "Cinzel", Georgia, serif;
+  font-feature-settings: "tnum";
+}
