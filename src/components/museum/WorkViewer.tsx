@@ -3,6 +3,7 @@
 import { useCallback, useState } from 'react';
 import dynamic from 'next/dynamic';
 import type { Artwork } from '@/data/artworks';
+import { withBase } from '@/utils/asset';
 
 const SculptureStage = dynamic(() => import('./SculptureStage'), { ssr: false });
 const ExperiencePlayer = dynamic(() => import('./ExperiencePlayer'), { ssr: false });
@@ -25,7 +26,7 @@ export default function WorkViewer({ work }: { work: Artwork }) {
   if (work.video) {
     return (
       <div className="bg-black">
-        <video src={work.video.src} controls playsInline className="mx-auto max-h-[82vh] w-full" />
+        <video src={withBase(work.video.src)} controls playsInline className="mx-auto max-h-[82vh] w-full" />
       </div>
     );
   }

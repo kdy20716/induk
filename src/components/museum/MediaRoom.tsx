@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { getRoom, worksInRoom } from '@/data/artworks';
+import { withBase } from '@/utils/asset';
 import RoomIntro from './RoomIntro';
 import Reveal from './Reveal';
 
@@ -57,7 +58,7 @@ export default function MediaRoom() {
             <div className="relative aspect-video w-full overflow-hidden bg-black shadow-[0_40px_120px_-30px_rgba(120,140,255,0.25)]">
               <video
                 ref={videoRef}
-                src={work.video!.src}
+                src={withBase(work.video!.src)}
                 muted={muted}
                 playsInline
                 loop
@@ -108,7 +109,7 @@ export default function MediaRoom() {
                   }`}
                 >
                   <div className="relative aspect-video w-32 shrink-0 overflow-hidden bg-white/5">
-                    <video src={`${w.video!.src}#t=4`} muted preload="metadata" className="h-full w-full object-cover opacity-70" />
+                    <video src={`${withBase(w.video!.src)}#t=4`} muted preload="metadata" className="h-full w-full object-cover opacity-70" />
                     {i === index && <span className="absolute left-2 top-2 h-1.5 w-1.5 animate-pulse rounded-full bg-red-500" />}
                   </div>
                   <div>

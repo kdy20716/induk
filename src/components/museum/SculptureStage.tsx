@@ -5,16 +5,18 @@ import * as THREE from 'three';
 import { GLTFLoader, type GLTF } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { clone as cloneSkinned } from 'three/examples/jsm/utils/SkeletonUtils.js';
 import type { ModelSpec } from '@/data/artworks';
+import { withBase } from '@/utils/asset';
 
 /* ───────────── 모델 캐시: 같은 GLB는 한 번만 다운로드/파싱 ───────────── */
 const cache = new Map<string, Promise<GLTF>>();
 const loader = new GLTFLoader();
 function loadModel(src: string) {
-  if (!cache.has(src)) cache.set(src, loader.loadAsync(src));
-  return cache.get(src)!;
+  const resolved = withBase(src);
+  if (!cache.has(resolved)) cache.set(resolved, loader.loadAsync(resolved));
+  return cache.get(resolved)!;
 }
 export function preloadModel(src: string) {
-  loadModel(src).catch(() => cache.delete(src));
+  loadModel(src).catch(() => cache.delete(withBase(src)));
 }
 
 const MATERIALS: Record<NonNullable<ModelSpec['material']>, () => THREE.Material> = {

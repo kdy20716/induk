@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import * as THREE from 'three';
 import type { Artwork, UnityBuild } from '@/data/artworks';
 import { smoothScroll } from '@/components/SmoothScroll';
+import { withBase } from '@/utils/asset';
 
 /* ════════════════════════ Unity WebGL 플레이어 ════════════════════════ */
 
@@ -46,7 +47,7 @@ function UnityPlayer({ build, onError }: { build: UnityBuild; onError: () => voi
 
   useEffect(() => {
     let cancelled = false;
-    const base = `${build.folder}/Build/${build.file}`;
+    const base = `${withBase(build.folder)}/Build/${build.file}`;
     const ext = build.ext ?? '';
     loadScript(`${base}.loader.js`)
       .then(() =>
@@ -56,7 +57,7 @@ function UnityPlayer({ build, onError }: { build: UnityBuild; onError: () => voi
             dataUrl: `${base}.data${ext}`,
             frameworkUrl: `${base}.framework.js${ext}`,
             codeUrl: `${base}.wasm${ext}`,
-            streamingAssetsUrl: `${build.folder}/StreamingAssets`,
+            streamingAssetsUrl: `${withBase(build.folder)}/StreamingAssets`,
             companyName: 'Induk University',
             productName: build.file,
             productVersion: '1.0',
@@ -112,7 +113,7 @@ function PanoViewer({ src, type }: { src: string; type: 'image' | 'video' }) {
     let texture: THREE.Texture;
     if (type === 'video') {
       video = document.createElement('video');
-      video.src = src;
+      video.src = withBase(src);
       video.crossOrigin = 'anonymous';
       video.loop = true;
       video.muted = true;
@@ -120,7 +121,7 @@ function PanoViewer({ src, type }: { src: string; type: 'image' | 'video' }) {
       video.play().catch(() => {});
       texture = new THREE.VideoTexture(video);
     } else {
-      texture = new THREE.TextureLoader().load(src);
+      texture = new THREE.TextureLoader().load(withBase(src));
     }
     texture.colorSpace = THREE.SRGBColorSpace;
 
@@ -223,7 +224,7 @@ export default function ExperiencePlayer({ work, onClose }: { work: Artwork; onC
       setMode(fallback);
       return;
     }
-    fetch(`${exp.unity.folder}/Build/${exp.unity.file}.loader.js`, { method: 'HEAD' })
+    fetch(`${withBase(exp.unity.folder)}/Build/${exp.unity.file}.loader.js`, { method: 'HEAD' })
       .then((r) => alive && setMode(r.ok ? 'unity' : fallback))
       .catch(() => alive && setMode(fallback));
     return () => {
