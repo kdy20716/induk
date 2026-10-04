@@ -128,20 +128,19 @@ const u = (id: string) => `https://images.unsplash.com/${id}?q=80&w=1600&auto=fo
 export const ARTWORKS: Artwork[] = [
   /* ───────────────────────── ROOM 01 · 조각실 ───────────────────────── */
   {
-    id: 'silent-queen',
+    id: 'bugatti-veyron',
     room: 'sculpture',
     no: 'S-01',
-    title: '침묵의 왕비',
-    titleEn: 'The Silent Queen',
-    artists: [{ name: '김민준', role: 'Digital Sculptor' }],
+    title: '2015 부가티 베이론 16.4',
+    titleEn: '2015 Bugatti Veyron 16.4',
+    artists: [{ name: '학생 프로젝트', role: 'Hard-Surface 3D Modeler & LookDev' }],
     year: 2026,
-    medium: 'ZBrush, 디지털 브론즈 셰이딩',
-    dimension: '실시간 3D · 약 50만 폴리곤',
+    medium: '하드서피스 3D 모델링, PBR 풀 텍스처',
+    dimension: '실시간 3D · PBR Textures',
     statement:
-      '고대 흉상의 비례를 디지털 점토로 다시 빚었습니다. 표면의 미세한 손상까지 스컬프팅으로 재현하여 수천 년의 시간이 남긴 흔적을 브론즈 재질 위에 담았습니다.',
-    model: { src: '/models/Nefertiti.glb', size: 2.1, material: 'bronze' },
-    tools: ['ZBrush', 'Substance 3D Painter', 'Marmoset Toolbag'],
-    credit: SAMPLE_MODEL,
+      '하이퍼카의 유려한 공기역학적 실루엣과 차체 페인트, 크롬 휠, 카본 파이버 질감을 정밀하게 구현한 하드서피스 모델링 프로젝트입니다. 실시간 빛 반사와 함께 360도로 자유롭게 회전하며 감상할 수 있습니다.',
+    model: { src: '/models/2015_Bugatti_Veyron_web_test_2k_1k.glb', size: 2.6, rotationY: 0.6 },
+    tools: ['Maya', 'Substance 3D Painter', 'Blender'],
   },
   {
     id: 'observer',

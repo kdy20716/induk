@@ -6,7 +6,7 @@ import { ARTWORKS, EXHIBITION } from '@/data/artworks';
 
 const SculptureStage = dynamic(() => import('./SculptureStage'), { ssr: false });
 
-const HERO = ARTWORKS.find((w) => w.id === 'silent-queen')!;
+const HERO = ARTWORKS[0];
 
 /**
  * 입구 (Entrance)
