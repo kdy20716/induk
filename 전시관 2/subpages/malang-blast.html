@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>말랑블라스트 (Malang Blast) — 기획 및 프로토타입 쇼케이스</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #0d0b18;
+      --card: rgba(26, 22, 44, 0.78);
+      --pink: #ff8fc7;
+      --mint: #6ef3d6;
+      --gold: #ffd97d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 20% 0%, #2a1d4e 0%, #0d0b18 60%);
+      color: #f7f4ff;
+      font-family: 'Noto Sans KR', sans-serif;
+      line-height: 1.7;
+      padding-bottom: 90px;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(13, 11, 24, 0.82);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(255, 143, 199, 0.22);
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--pink);
+      background: rgba(255, 143, 199, 0.15);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      background: rgba(255, 143, 199, 0.32);
+      transform: translateX(-2px);
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 48px 24px 0;
+    }
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr 0.85fr;
+      gap: 32px;
+      align-items: center;
+      margin-bottom: 56px;
+    }
+    @media (max-width: 860px) {
+      .hero { grid-template-columns: 1fr; }
+    }
+    .badge {
+      display: inline-block;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: var(--mint);
+      padding: 5px 12px;
+      border-radius: 999px;
+      border: 1px solid rgba(110, 243, 214, 0.35);
+      margin-bottom: 14px;
+    }
+    h1 {
+      font-size: clamp(32px, 4.5vw, 52px);
+      font-weight: 900;
+      letter-spacing: -0.02em;
+      margin-bottom: 14px;
+      background: linear-gradient(90deg, #fff, var(--pink), var(--mint));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+    .lead {
+      font-size: 16px;
+      color: rgba(247, 244, 255, 0.82);
+      margin-bottom: 22px;
+    }
+    .hero-art {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.55);
+    }
+    .hero-art img {
+      width: 100%;
+      display: block;
+    }
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      margin: 48px 0 18px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .section-title::before {
+      content: '';
+      width: 6px;
+      height: 22px;
+      border-radius: 4px;
+      background: linear-gradient(180deg, var(--pink), var(--mint));
+    }
+    .video-box {
+      border-radius: 20px;
+      overflow: hidden;
+      border: 1px solid rgba(255, 143, 199, 0.3);
+      background: #05040a;
+      box-shadow: 0 20px 55px rgba(0, 0, 0, 0.6);
+    }
+    .video-box video {
+      width: 100%;
+      max-height: 560px;
+      display: block;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      gap: 22px;
+    }
+    .card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      padding: 24px;
+      backdrop-filter: blur(12px);
+    }
+    .card h3 {
+      font-size: 18px;
+      color: var(--gold);
+      margin-bottom: 8px;
+    }
+    .card p {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.78);
+    }
+    .shot-card {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .shot-card img {
+      width: 100%;
+      aspect-ratio: 9 / 16;
+      object-fit: cover;
+      display: block;
+    }
+    .shot-card .cap {
+      padding: 14px 18px;
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.85);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-btn" href="../index.html#work-1">← 인덕 전시장 액자 #01 로 돌아가기</a>
+    <span style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:0.18em;color:rgba(255,255,255,0.6);">EXHIBIT No.01 · MALANG BLAST</span>
+  </header>
+
+  <main class="container">
+    <section class="hero">
+      <div>
+        <span class="badge">UNITY · MOBILE CASUAL PUZZLE · ANTIGRAVITY MCP</span>
+        <h1>말랑블라스트 (Malang Blast)</h1>
+        <p class="lead">
+          글로벌 메가히트 퍼즐 <strong>블록블라스트(Block Blast)</strong>의 검증된 8×8 격자 콤보 룰과,
+          완구·캐릭터 시장에서 큰 사랑을 받는 <strong>'말랑이(Squishy)'</strong> 감성을 융합한 모바일 캐주얼 퍼즐 게임입니다.
+        </p>
+        <div class="grid-3" style="grid-template-columns: repeat(2, 1fr); gap: 14px;">
+          <div class="card">
+            <h3>TIME ATTACK &amp; ITEM</h3>
+            <p>제한 시간 타이머 게이지와 SPIN(블록 90도 회전) / SKIP(새로고침) 전략 아이템으로 속도감과 손맛을 극대화했습니다.</p>
+          </div>
+          <div class="card">
+            <h3>말랑이 쇼케이스 룸</h3>
+            <p>표정이 살아있는 4색 말랑이 캐릭터와 로비 '말랑이들을 톡톡 눌러보세요!' 터치 인터랙션 룸을 제공합니다.</p>
+          </div>
+        </div>
+      </div>
+      <div class="hero-art">
+        <img src="../assets/images/graphic.png" alt="말랑블라스트 키아트" />
+      </div>
+    </section>
+
+    <h2 class="section-title">공식 1분 플레이 &amp; 트레일러 영상</h2>
+    <div class="video-box">
+      <video src="../assets/videos/mallang_1min.mp4" controls autoplay muted loop playsinline></video>
+    </div>
+
+    <h2 class="section-title">인게임 프로토타입 스크린샷 (Unity)</h2>
+    <div class="grid-3">
+      <div class="shot-card">
+        <img src="../assets/images/mallang_s1.png" alt="타이틀 화면" />
+        <div class="cap"><strong>[Scene_Title]</strong> 달빛·별빛 파스텔 배경과 입체 타이틀 로고, 대표 말랑이 캐릭터</div>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/images/mallang_s2.png" alt="로비 화면" />
+        <div class="cap"><strong>[Scene_Lobby]</strong> 수정 동굴 쇼케이스 룸 — 말랑이 터치 상호작용 및 게임 시작</div>
+      </div>
+      <div class="shot-card">
+        <img src="../assets/images/mallang_s3.png" alt="인게임 화면" />
+        <div class="cap"><strong>[Scene_InGame]</strong> 8×8 퍼즐 보드, TIME 게이지, SKIP / SPIN 전략 아이템</div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

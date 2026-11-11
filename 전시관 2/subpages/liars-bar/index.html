@@ -1,0 +1,652 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LIAR'S BAR : DEATH TABLE — 프로젝트 작업소개 및 발표자료 (202236028 도연)</title>
+  <link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <!-- Atmospheric Background & Impact Overlays -->
+  <canvas id="bg-canvas"></canvas>
+  <div class="spotlight-overlay"></div>
+  <div id="fx-blood" class="fx-blood-overlay"></div>
+  <div id="fx-devil" class="fx-devil-overlay"></div>
+
+  <!-- Top Interactive Presentation Control Bar -->
+  <header class="top-hud">
+    <div class="brand-pill">
+      <span class="brand-dot"></span>
+      <span class="brand-title">LIAR'S BAR // DEATH TABLE</span>
+      <span class="brand-sub">202236028 도연 · Unity 6 HDRP</span>
+    </div>
+    <div class="soundboard-bar">
+      <button class="hud-btn gold" onclick="LiarDeckNav.printPdf()" title="제출용 PDF 인쇄/저장">
+        📄 PDF 출력
+      </button>
+    </div>
+  </header>
+
+  <!-- Main 10-Slide Presentation Deck -->
+  <main class="deck-viewport">
+
+    <!-- =================================================================
+         SLIDE 01 : COVER / INTRO
+         ================================================================= -->
+    <section class="slide active" data-slide="1">
+      <div class="cover-hero">
+        <div class="anim-item">
+          <div class="cover-badge">00. PRESENTATION DECK // UNITY 6 HDRP PROTOTYPE</div>
+          <h1 class="cover-main-title">
+            LIAR'S BAR
+            <span>DEATH TABLE : 라이어스 바 데스 테이블</span>
+          </h1>
+          <p class="cover-desc">
+            어둠이 내려앉은 지하 스피크이지 바, 피투성이 원형 테이블 위에 놓인 <b>20장의 카드</b>와 <b>6연발 리볼버</b>.<br />
+            과거 직접 제작했던 2D 웹 게임 《Liar's Roulette》의 덱 심리전과 스팀 《Liar's Bar》의 <b>1인칭 신체 몰입감(Body Awareness) · 절차적 IK 처형 연출</b>을 하나로 융합한 3D 서스펜스 데스게임 프로젝트입니다.
+          </p>
+          <div class="cover-meta-grid">
+            <div class="cover-meta-item">
+              <small>PRESENTER // 발표자</small>
+              <strong>202236028 도연</strong>
+            </div>
+            <div class="cover-meta-item">
+              <small>ENGINE &amp; PIPELINE // 개발 환경</small>
+              <strong>Unity 6 (6000.3.23f1) HDRP</strong>
+            </div>
+            <div class="cover-meta-item">
+              <small>AI PAIR PROGRAMMING // 협업 도구</small>
+              <strong>Google Antigravity + Unity MCP (38 Turns)</strong>
+            </div>
+            <div class="cover-meta-item">
+              <small>GENRE &amp; MOOD // 장르 및 테마</small>
+              <strong style="color:var(--crimson-bright);">1인칭 블러핑 러시안 룰렛 데스게임</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="anim-item">
+          <div class="cover-showcase-frame" onclick="LiarLightbox.openLightbox('assets/images/user_01_lobby.png', 'Liar\'s Bar : Death Table — 메인 로비 (5대 모드 메뉴 & 피투성이 데스 테이블)')">
+            <img src="assets/images/user_01_lobby.png" alt="Liar's Bar Main Lobby" />
+            <div class="cover-showcase-caption">
+              <span>▲ 인게임 메인 로비 (LIAR'S BAR // 데스 테이블 &amp; 20-Card Deck)</span>
+              <span>🔍 클릭 시 확대</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 02 : 01. 자신이 고른 주제
+         ================================================================= -->
+    <section class="slide" data-slide="2">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">01. TOPIC SELECTION // 자신이 고른 주제</span>
+          <h2 class="slide-title">내가 꽂힌 주제: <span class="crimson">“거짓말이 곧 목숨값이 되는”</span> 1인칭 블러핑 데스게임</h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 01 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="highlight-quote anim-item">
+          “단순히 카드를 내는 보드게임이 아니라, 내 눈앞의 상대를 속이고 적발되는 순간 내 손으로 직접 리볼버를 집어 관자놀이에 겨누는 극한의 1인칭 심리 스릴러”
+        </div>
+
+        <div class="grid-2-unequal anim-item">
+          <div class="panel-card crimson-accent">
+            <h3>🎯 핵심 주제 정의: 《라이어스 바 : 데스 테이블》</h3>
+            <ul>
+              <li><b>장르적 정체성</b>: 4인 테이블탑 카드 블러핑(Bluffing) + 1인칭 러시안 룰렛(Russian Roulette) 서스펜스 게임.</li>
+              <li><b>핵심 규칙 (20장 카드 덱)</b>: <b>King 6장 · Queen 6장 · Ace 6장</b> + 특수 카드 <b>Joker 2장 또는 Devil 2장</b>으로 구성된 20장 덱을 4명에게 5장씩 배분.</li>
+              <li><b>블러핑과 심판</b>: 매 라운드 지정된 타겟 카드(K/Q/A)를 낸다고 주장하며 뒷면으로 1~3장을 제출. 다음 차례 참가자가 <b>“거짓말!(Liar)”</b>을 선언하면 앞사람의 카드만 즉시 뒤집어 진위를 판정.</li>
+              <li><b>데스 테이블의 대가</b>: 거짓말이 들통나거나 진실을 의심한 패자는 자기 앞의 6연발 리볼버를 직접 집어 들어 관자놀이에 대고 방아쇠를 당김 (치사율 <b>1/6 → 2/6 → 3/6 → … → 6/6</b>).</li>
+            </ul>
+          </div>
+
+          <div class="panel-card gold-accent" style="justify-content: center; align-items: center;">
+            <h3>🃏 인게임 5종 카드 (마우스를 올리면 뒤집힙니다)</h3>
+            <div class="poker-cards-showcase">
+              <div class="poker-card-3d">
+                <div class="poker-card-inner">
+                  <div class="poker-card-face"><img src="assets/cards/actual_back.jpg" alt="Back" /></div>
+                  <div class="poker-card-face poker-card-front"><img src="assets/cards/actual_king.jpg" alt="King" /></div>
+                </div>
+                <div class="poker-card-label">KING (6장)</div>
+              </div>
+              <div class="poker-card-3d">
+                <div class="poker-card-inner">
+                  <div class="poker-card-face"><img src="assets/cards/actual_back.jpg" alt="Back" /></div>
+                  <div class="poker-card-face poker-card-front"><img src="assets/cards/actual_queen.jpg" alt="Queen" /></div>
+                </div>
+                <div class="poker-card-label">QUEEN (6장)</div>
+              </div>
+              <div class="poker-card-3d">
+                <div class="poker-card-inner">
+                  <div class="poker-card-face"><img src="assets/cards/actual_back.jpg" alt="Back" /></div>
+                  <div class="poker-card-face poker-card-front"><img src="assets/cards/actual_ace.png" alt="Ace" /></div>
+                </div>
+                <div class="poker-card-label">ACE (6장)</div>
+              </div>
+              <div class="poker-card-3d">
+                <div class="poker-card-inner">
+                  <div class="poker-card-face"><img src="assets/cards/actual_back.jpg" alt="Back" /></div>
+                  <div class="poker-card-face poker-card-front"><img src="assets/cards/actual_joker.jpg" alt="Joker" /></div>
+                </div>
+                <div class="poker-card-label">JOKER (와일드)</div>
+              </div>
+              <div class="poker-card-3d">
+                <div class="poker-card-inner">
+                  <div class="poker-card-face"><img src="assets/cards/actual_back.jpg" alt="Back" /></div>
+                  <div class="poker-card-face poker-card-front"><img src="assets/cards/actual_devil.jpg" alt="Devil" /></div>
+                </div>
+                <div class="poker-card-label" style="color:#ff5c6a;">DEVIL (특수)</div>
+              </div>
+            </div>
+            <p style="font-size:11.5px; color:var(--text-muted); margin-top:10px; text-align:center;">
+              ※ 실제 게임 에셋: <b>킹카드(스페이드 K) · 퀸카드(스페이드 Q) · 스페이드 카드(A) · 조커카드 · 데빌카드(타로)</b>
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 03 : 02. 해당 소재를 고른 이유 분석
+         ================================================================= -->
+    <section class="slide" data-slide="3">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">02. WHY THIS SUBJECT? // 해당 소재를 고른 이유 분석</span>
+          <h2 class="slide-title">100년 전 고전 블러핑과 러시안 룰렛이 <span class="gold">지금도 극한의 공포를 주는 이유</span></h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 02 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3 anim-item">
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/user_06_roulette_aim.png', '들통나면 죽는 1인칭 러시안 룰렛 관자놀이 조준')">
+              <img src="assets/images/user_06_roulette_aim.png" alt="Russian Roulette Tension" />
+              <div class="card-media-tag crimson">01. 죽음의 리스크 // 5초 러시안 룰렛</div>
+            </div>
+            <h3>01. 시대를 초월한 원초적 긴장감</h3>
+            <p>
+              트럼프 카드를 뒷면으로 내는 <b>‘블러핑’</b>과 <b>‘러시안 룰렛’</b>은 100년 넘은 고전 규칙입니다.
+            </p>
+            <p>
+              <b>“들통나면 죽는다”</b>는 비가역적 리스크가 결합될 때 복잡한 현대 게임 이상의 아드레날린을 뿜어냅니다.
+            </p>
+          </div>
+
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/actual_lookdown_alex.png', '1인칭 시점에서 내려다본 내 캐릭터 몸통과 테이블 위 리볼버 (알렉스 턴)')">
+              <img src="assets/images/actual_lookdown_alex.png" alt="Body Awareness Look Down" />
+              <div class="card-media-tag">02. 1인칭 신체감 // 내 시점 &amp; 테이블 리볼버</div>
+            </div>
+            <h3>02. 비언어적 시선과 ‘1인칭 신체’의 위력</h3>
+            <p>
+              단순 카드 판이 아닌, 고개를 숙였을 때 <b>내 몸통과 테이블 위 리볼버</b>가 보이는 1인칭 공간감입니다.
+            </p>
+            <p>
+              상대와 마주치는 시선과 척추 회전을 통해 <b>‘신체적 체화 공포(Embodied Horror)’</b>로 승화시킵니다.
+            </p>
+          </div>
+
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/user_08_devil_death.png', 'THE DEVIL 카드 발동 및 화면 혈흔 처형 연출')">
+              <img src="assets/images/user_08_devil_death.png" alt="Devil Execution Impact" />
+              <div class="card-media-tag crimson">03. 2D 한계 돌파 // 3D 혈흔·처형 임팩트</div>
+            </div>
+            <h3>03. 자체 웹 프로토타입의 한계 돌파</h3>
+            <p>
+              웹(HTML/JS) 2D <b>《Liar's Roulette》</b>에서 20장 카드 덱 심리전의 룰적 재미를 먼저 검증했습니다.
+            </p>
+            <p>
+              2D 화면만으로는 부족했던 <b>총구를 관자놀이에 겨누는 5초의 정적과 테이블 슬럼프</b>를 3D로 완성했습니다.
+            </p>
+          </div>
+        </div>
+
+        <div class="highlight-quote anim-item">
+          💡 핵심 통찰: “100년 된 카드 블러핑 규칙이라도, 1인칭 신체 시점(Body Awareness)과 5초의 청각적 서스펜스(해머 콕킹음 + 심장박동 BGM)가 결합되면 완전히 새로운 실존적 공포 경험이 된다.”
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 04 : 03. 비슷한 작업들 조사 (3단계 층위 분석)
+         ================================================================= -->
+    <section class="slide" data-slide="4">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">03. REFERENCE &amp; SCALE ANALYSIS // 비슷한 작업들 조사</span>
+          <h2 class="slide-title">심리 추론 게임의 <span class="gold">3가지 규모·층위(Scale &amp; Layer)</span> 확장 조사</h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 03 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3 anim-item">
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/user_04_waiting_room.png', '제1층위: 블랙아웃 대기실 4인 좌석 관리 및 실시간 심리전 채팅')">
+              <img src="assets/images/user_04_waiting_room.png" alt="Social Chat Scale" />
+              <div class="card-media-tag">제1층위 // 대기실 채팅 &amp; 집단 추론</div>
+            </div>
+            <h3>🗣️ 제1층위: 언어·집단 추론 규모</h3>
+            <p style="color:var(--gold); font-weight:700;">레퍼런스: 《라이어 게임》 · 《마피아》</p>
+            <ul>
+              <li><b>규모 특성</b>: 참가자들이 실시간 텍스트 채팅으로 심리전을 펼치는 <b>거시적 집단 추론</b>.</li>
+              <li><b>장단점</b>: 높은 소셜 몰입도를 주지만, 대화에만 의존할 경우 물리적 긴장감이 떨어짐.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/user_05_dealing.png', '제2층위: 20장 한정 카드 셔플 딜링 및 타겟 K 라운드 수싸움')">
+              <img src="assets/images/user_05_dealing.png" alt="Tactical Card Scale" />
+              <div class="card-media-tag crimson">제2층위 // 20장 카드 덱 &amp; 전술 룰</div>
+            </div>
+            <h3>🃏 제2층위: 전술 카드·보드게임 규모</h3>
+            <p style="color:#ff8a94; font-weight:700;">레퍼런스: 자체 웹 게임 《Liar's Roulette》</p>
+            <ul>
+              <li><b>규모 특성</b>: 20장의 카드(K/Q/A + 특수)를 카운팅하는 <b>전술 테이블 보드게임</b>.</li>
+              <li><b>장단점</b>: 규칙이 직관적이고 회전율이 빠르나, 2D UI만으로는 밀실 현장감이 부족함.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/user_06_roulette_aim.png', '제3층위: 1인칭 시점 5초 러시안 룰렛 관자놀이 조준 서스펜스')">
+              <img src="assets/images/user_06_roulette_aim.png" alt="Embodied Horror Scale" />
+              <div class="card-media-tag">제3층위 // 1인칭 리볼버 &amp; 관자놀이 조준</div>
+            </div>
+            <h3>🔫 제3층위: 1인칭 물리·밀실 공포 규모</h3>
+            <p style="color:var(--gold); font-weight:700;">레퍼런스: 스팀 《Liar's Bar》 · 《Buckshot》</p>
+            <ul>
+              <li><b>규모 특성</b>: 핀조명 밀실 테이블에서 직접 총을 겨누는 <b>초근접 1인칭 서스펜스</b>.</li>
+              <li><b>장단점</b>: 해머 콕킹음과 압도적 공포를 주나, 3D 조작 중 UI 가독성이 저하되기 쉬움.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight-quote anim-item">
+          📌 조사 결론: [집단 대화 심리전(소셜)] · [20장 카드 수싸움(2D 웹 보드게임)] · [1인칭 관자놀이 룰렛(3D 밀실 공포)]은 각각 서로 다른 층위의 재미를 주며, 이를 하나로 합칠 때 시너지가 극대화된다!
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 05 : 04. 게임 방향(디렉션) 설정
+         ================================================================= -->
+    <section class="slide" data-slide="5">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">04. GAME DIRECTION // 게임 방향(디렉션) 설정</span>
+          <h2 class="slide-title"><span class="crimson">“세 가지 층위를 단 하나의 테이블에서</span> 한 번에 경험할 수는 없을까?”</h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 04 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="highlight-quote anim-item">
+          🎯 핵심 디렉션: “소셜 채팅 심리전의 대화 + 2D 웹 게임의 쾌적한 카드 조작감 + 3D 1인칭 데스게임의 물리적 공포를 끊김 없이 하나로 융합한다!”
+        </div>
+
+        <div class="grid-3 anim-item">
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/user_07_turn_play.png', 'Direction 1: 턴 연동 스마트 덱 (내 차례 확대/잠금 & 비턴 50% 매립)')">
+              <img src="assets/images/user_07_turn_play.png" alt="Hybrid Turn Deck UX" />
+              <div class="card-media-tag crimson">Direction 1 // 턴 연동 스마트 덱 UX</div>
+            </div>
+            <h3>Direction 1. 턴 연동 하이브리드 시점·덱 UX</h3>
+            <p>
+              마우스를 움직이다가 카드를 잘못 누르는 문제를 해결하기 위해 <b>내 턴과 상대 턴의 조작계를 분리</b>했습니다.
+            </p>
+            <ul>
+              <li><b>내 차례</b>: 카드 덱이 전면 확대되며 마우스 시점 자동 잠금 (웹 게임의 클릭 정확도).</li>
+              <li><b>상대 차례</b>: 카드를 내면 즉시 시점 해제 &amp; 카드가 하단 50% 매립되어 테이블 시야 100% 확보.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/ref_wrists_and_guns.png', 'Direction 2: 테이블 위 근접 리볼버 및 손을 뻗어 집는 2단계 리얼 모션')">
+              <img src="assets/images/ref_wrists_and_guns.png" alt="Two-Step Realistic Gun Grip" />
+              <div class="card-media-tag">Direction 2 // 근접 리볼버 &amp; 2단계 파지 모션</div>
+            </div>
+            <h3>Direction 2. 총이 날아오지 않는 2단계 리얼 모션</h3>
+            <p>
+              총이 허공에서 손으로 순간 이동하는 이질감을 없애고 <b>물리적 거리와 절차적 IK</b>로 구현했습니다.
+            </p>
+            <ul>
+              <li>리볼버를 각 참가자 오른손 앞(<code>1.18m</code>)에 근접 배치.</li>
+              <li><b>1단계</b>: 상체를 <code>15°</code> 숙여 테이블 위 총잡이를 직접 파지.</li>
+              <li><b>2단계</b>: 손바닥 월드 좌표와 동기화하여 관자놀이까지 한 덩어리로 조준.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/ref_wrists_and_guns.png', 'Direction 3: 3D 리볼버 근접 배치, 관자놀이 조준 및 테이블 핏웅덩이 슬럼프 연출')">
+              <img src="assets/images/ref_wrists_and_guns.png" alt="3D Gun Placement & Table Slump" />
+              <div class="card-media-tag crimson">Direction 3 // 3D 리볼버 배치 &amp; 데스 슬럼프</div>
+            </div>
+            <h3>Direction 3. 타협 없는 데스 임팩트 &amp; 암실 미학</h3>
+            <p>
+              잡광을 모두 끄고 오직 <b>테이블 직하 핀조명(2200루멘)</b>과 <b>무광 종이 카드</b>에만 시선을 집중시켰습니다.
+            </p>
+            <ul>
+              <li>어색하게 멈추는 사망이 아닌, 골반·상체 전방 보간으로 <b>얼굴(뺨)이 테이블 위 핏웅덩이에 완전히 닿도록</b> 연출.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 06 : 05. 게임 방향(디테일) 설정
+         ================================================================= -->
+    <section class="slide" data-slide="6">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">05. DETAILED DESIGN // 게임 방향(디테일) 설정</span>
+          <h2 class="slide-title">세 가지 층위를 완성하는 <span class="gold">3대 코어 모드 &amp; 디테일 메커니즘</span></h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 05 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3 anim-item">
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/user_02_map_select.png', '① 소셜 & 블랙아웃 데스룸: 5대 로비 메뉴 및 3종 맵 테마 선택 모달')">
+              <img src="assets/images/user_02_map_select.png" alt="Social Lobby & Map Select" />
+              <div class="card-media-tag">① 소셜 // 5대 메뉴 &amp; 3종 테마 맵</div>
+            </div>
+            <h3>① 소셜 &amp; 블랙아웃 데스룸 모드</h3>
+            <ul>
+              <li><b>로비 &amp; 3종 테마</b>: 싱글·방 개설·6자리 초대 코드(<code>LBAR-3582</code>) 합류 및 <b>블러드 살롱 · 취조 밀실 · VIP 라운지</b> 3종 조명 테마.</li>
+              <li><b>블랙아웃 대기실</b>: 4인 좌석 관리, 방장 <b>강퇴(<code>KICK</code>)</b>, 실시간 심리전 채팅(<code>ROOM CHAT</code>).</li>
+              <li><b>3D 말풍선</b>: 인게임 발언(<code>"Ace 1장 냅니다!"</code>)이 캐릭터 머리 위 월드 좌표에 실시간 연동.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/user_05_dealing.png', '② 전술 20장 카드 & 데빌 심판: Table K 타겟 및 SHUFFLING 딜링')">
+              <img src="assets/images/user_05_dealing.png" alt="Tactical 20-Card Deck Mode" />
+              <div class="card-media-tag crimson">② 전술 // 20장 셔플 &amp; 데빌 집단 심판</div>
+            </div>
+            <h3>② 전술 20장 카드 &amp; 데빌 심판 모드</h3>
+            <ul>
+              <li><b>20장 딜링 &amp; 타겟 랭크</b>: 매 라운드 <code>Table: K / Q / A</code> 지정 및 중앙 <code>SHUFFLING 5 CARDS</code> 연출.</li>
+              <li><b>뒷면 제출 &amp; 거짓말 판정</b>: 1~3장 뒷면 제출 후 거짓말 선언 시 앞사람 카드만 즉시 검증.</li>
+              <li><b><code>THE DEVIL</code> 집단 처형</b>: 데빌 카드 적발 시 중앙에 타로가 공개되며 <b>제출자 외 생존자 전원 동시 룰렛</b> 수행.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/user_06_roulette_aim.png', '③ 1인칭 5초 서스펜스 & 처형: [찰칵!] 5초 뒤 격발 관자놀이 조준')">
+              <img src="assets/images/user_06_roulette_aim.png" alt="First Person Russian Roulette Mode" />
+              <div class="card-media-tag">③ 1인칭 // 5초 카운트다운 &amp; 누적 탄창</div>
+            </div>
+            <h3>③ 1인칭 5초 서스펜스 &amp; 혈흔 처형 모드</h3>
+            <ul>
+              <li><b>관자놀이 조준 5초 카운트다운</b>: 패자가 3D 리볼버로 관자놀이를 겨누며 <b><code>[찰칵!] 5.0s → 0.0s</code></b> 진행.</li>
+              <li><b>누적 탄창 카운터</b>: 생존할 때마다 탄창이 <b><code>0/6 → 1/6 → 2/6</code></b>으로 상승하여 치사율 증폭.</li>
+              <li><b>혈흔 드립 &amp; 슬럼프</b>: 실탄 격발 시 화면 전체 핏방울 및 <b>사망자(<code>DEAD</code>) 테이블 안착</b>.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 07 : 06. 게임 방향(구현) 설정
+         ================================================================= -->
+    <section class="slide" data-slide="7">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">06. IMPLEMENTATION ROADMAP // 게임 방향(구현) 설정</span>
+          <h2 class="slide-title">프로토타입 구현 후 <span class="crimson">단계적으로 에셋과 연출을 업그레이드</span>하는 파이프라인</h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 06 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="grid-3 anim-item">
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/shot_01_lobby.png', 'STEP 01: Unity 6 HDRP 공간 구축 및 Unity MCP 실시간 제어')">
+              <img src="assets/images/shot_01_lobby.png" alt="Prototype Architecture Space" />
+              <div class="card-media-tag">STEP 01 // HDRP 원형 테이블 &amp; 공간 구축</div>
+            </div>
+            <h3>STEP 01. 코어 프로토타입 &amp; 공간 구축</h3>
+            <p style="color:var(--gold); font-size:12px; font-weight:700;">Turn #1 ~ #12 // 기반 아키텍처 완성</p>
+            <ul>
+              <li>Unity 6 HDRP 환경 세팅 및 GitHub 전용 <code>.gitignore</code> 구성.</li>
+              <li><b>Unity MCP Server (Port 6400)</b> 연동으로 씬 계층·컴포넌트 자동화 제어.</li>
+              <li>어두운 바, 대형 원형 테이블, 직하 스포트라이트, 소켓 멀티플레이 코어 구현.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card crimson-accent panel-card-with-img">
+            <div class="card-media-thumb crimson-border" onclick="LiarLightbox.openLightbox('assets/images/user_05_dealing.png', 'STEP 02: 웹 게임 20장 카드 덱 및 오디오 에셋 이식')">
+              <img src="assets/images/user_05_dealing.png" alt="Card Textures & Audio Migration" />
+              <div class="card-media-tag crimson">STEP 02 // 20장 카드 텍스처 &amp; 오디오 이식</div>
+            </div>
+            <h3>STEP 02. 웹 게임 에셋 &amp; 사운드 이식</h3>
+            <p style="color:#ff8a94; font-size:12px; font-weight:700;">Turn #13 ~ #25 // 규칙·오디오 업그레이드</p>
+            <ul>
+              <li>웹 게임 《Liar's Roulette》의 <b>실제 포커 카드 텍스처(K/Q/A/Joker/Devil)</b>를 Unity 3D 카드 메시에 이식.</li>
+              <li>원작 오디오 6종(<code>Cold Pressure</code>, <code>Pulse</code>, <code>cock/bang/click</code>) 및 우든 UI 사운드 적용.</li>
+              <li>5대 로비 메뉴, 3종 맵 테마 모달, 6자리 코드 및 대기실 채팅 UI 완성.</li>
+            </ul>
+          </div>
+
+          <div class="panel-card gold-accent panel-card-with-img">
+            <div class="card-media-thumb" onclick="LiarLightbox.openLightbox('assets/images/ref_wrists_and_guns.png', 'STEP 03: 3D 리볼버 에셋 및 절차적 IK 손목/파지 고도화')">
+              <img src="assets/images/ref_wrists_and_guns.png" alt="3D Props & Procedural IK Polish" />
+              <div class="card-media-tag">STEP 03 // 3D 리볼버 &amp; 절차적 IK 폴리싱</div>
+            </div>
+            <h3>STEP 03. 3D 에셋 &amp; 절차적 IK 고도화</h3>
+            <p style="color:var(--gold); font-size:12px; font-weight:700;">Turn #26 ~ #38 // 디테일·모션 폴리싱</p>
+            <ul>
+              <li><code>CityPeople</code> 캐릭터 4인 착석 및 <b>손목 0° 교정 · 팔꿈치 하방 벡터 · 주먹 파지</b> 적용.</li>
+              <li><code>DWm715</code> 3D 리볼버를 참가자 앞에 근접 배치하고 관자놀이 5초 서스펜스 완성.</li>
+              <li><code>THE DEVIL</code> 적발 시 화면 전체 혈흔 드립 및 <b>사망자(<code>DEAD</code>) 테이블 안착 연출</b> 완성.</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="highlight-quote anim-item">
+          🔧 핵심 엔지니어링 전략: 프로토타입으로 게임 루프(로비 → 대기실 → 20장 딜링 → 거짓말 판정 → 러시안 룰렛)를 먼저 검증한 뒤, 실제 카드/사운드 에셋과 3D 관자놀이 조준·혈흔 연출을 단계적으로 입혀 완성도를 극대화!
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 08 : 07. 프로토타입 실행 영상 (Movie_001.mp4)
+         ================================================================= -->
+    <section class="slide" data-slide="8">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">07. EXECUTION VIDEO // 직접 녹화한 실행 영상(Movie_001.mp4)</span>
+          <h2 class="slide-title">프로토타입 <span class="crimson">실행 녹화 영상(Movie_001.mp4) 풀스크린 시연</span></h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 07 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="video-full-box anim-item">
+          <!-- Video Control & Source Bar -->
+          <div class="video-top-bar">
+            <div class="video-info-tag">
+              <span class="rec-dot">● REC</span>
+              <b>IN-GAME FOOTAGE : <code>Movie_001.mp4</code> / YouTube HD</b>
+            </div>
+            <div class="video-switch-group">
+              <button class="hud-btn crimson" onclick="LiarYoutube.showLocalVideo()" title="Movie_001.mp4 원본 재생">
+                🎬 로컬 영상
+              </button>
+              <input id="yt-url-input" type="text" value="https://youtu.be/xH7tp5OEZuQ" placeholder="https://youtu.be/... 유튜브 주소"
+                     class="video-url-input" />
+              <button class="hud-btn gold" onclick="LiarYoutube.applyYoutubeUrl()">YouTube 재생</button>
+            </div>
+          </div>
+
+          <!-- Video Player Container (Expanded Full Width) -->
+          <div id="live-video-container" class="video-player-frame">
+            <video id="local-gameplay-video" src="images/Movie_001.mp4" poster="assets/images/user_08_devil_death.png"
+                   controls preload="metadata" style="display:block;"></video>
+            <iframe id="yt-iframe" src="https://www.youtube.com/embed/xH7tp5OEZuQ?rel=0" title="YouTube Gameplay Video"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen style="display:block;"></iframe>
+          </div>
+
+          <!-- Print / PDF Export Dual Frame Preview -->
+          <div class="print-only-video-card">
+            <div class="print-video-thumb">
+              <img src="assets/images/user_06_roulette_aim.png" alt="Video Frame 1" />
+              <div class="print-video-label">
+                ▶ 시연 영상 ① : [찰칵!] 5초 뒤 격발 관자놀이 조준 (https://youtu.be/xH7tp5OEZuQ)
+              </div>
+            </div>
+            <div class="print-video-thumb crimson-border">
+              <img src="assets/images/user_08_devil_death.png" alt="Video Frame 2" />
+              <div class="print-video-label crimson-bg">
+                ▶ 시연 영상 ② : THE DEVIL 발동 &amp; 데이빗 DEAD 슬럼프 처형
+              </div>
+            </div>
+          </div>
+
+          <div class="video-bottom-bar">
+            <span>🎥 온라인 시연 영상: <b>https://youtu.be/xH7tp5OEZuQ</b> (유튜브 1080p 스트리밍)</span>
+            <a id="yt-pdf-link" href="https://youtu.be/xH7tp5OEZuQ" target="_blank">
+              ▶ YouTube 영상 바로 열기
+            </a>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 09 : 08. 사용한 프롬프트 적기 (Turn #1 ~ #38 아카이브)
+         ================================================================= -->
+    <section class="slide" data-slide="9">
+      <div class="slide-header anim-item">
+        <div>
+          <span class="rubric-tag">08. PROMPT ENGINEERING LOG // 사용한 프롬프트 적기</span>
+          <h2 class="slide-title">Google Antigravity에 사용한 <span class="gold">실제 핵심 프롬프트 &amp; 구현 결과 (Turn #1~#38)</span></h2>
+        </div>
+        <div class="slide-step-badge">CRITERIA 08 / 08</div>
+      </div>
+
+      <div class="slide-body">
+        <div class="prompt-grid anim-item">
+          <div class="prompt-item">
+            <div class="turn-badge"><span>TURN #01 ~ #02 · 환경 구축 &amp; 초기 프로토타입</span><span>2026-10-07</span></div>
+            <blockquote>“유니티 새로운 프로젝트를 만들었는데 깃허브에 올릴수 있게 깃이그노어를 추가해주고 유니티 mcp랑 연결해줘. 어두운 방, 테이블을 비출 조명, 여러 사람들을 배치해서 라이어 게임을 제작해줘.”</blockquote>
+            <div class="prompt-result">✔ .gitignore 생성, Unity MCP(Port 6400) 연동, HDRP 바·원형 테이블·핀조명 자동 생성</div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="turn-badge"><span>TURN #13 &amp; #18 · 1인칭 내 몸 보기 &amp; 웹 게임 사운드/데빌 카드 이식</span><span>2026-10-21</span></div>
+            <blockquote>“라이어스바 보면 아래보면 자기 몸이 보이잖아 그렇게 제작하길 원해. 전에 참고하라했던 웹게임을 참고해서 데빌 카드판일때는 화면 비네팅 효과에 악마 웃음소리 등 음악, 효과음 전부 구현해줘.”</blockquote>
+            <div class="prompt-result">✔ Seat 0 정장 아바타 1인칭 신체 렌더링, 웹 20장 카드 덱 &amp; devil/cock/bang/click 사운드 이식</div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="turn-badge"><span>TURN #20 &amp; #23 · 헤드샷 테이블 슬럼프 &amp; 핏웅덩이 / BGM 교체</span><span>2026-10-22</span></div>
+            <blockquote>“머리에 총을 맞고 테이블에 엎어지는 모션을 적용시키고 싶어. 엎어졌을때 머리밑에서 피가 어느정도 퍼지고 고인 피를 흉내내고 싶어. 음악은 Pulse In The Dark로 바꿔줘.”</blockquote>
+            <div class="prompt-result">✔ 절차적 본 회전 슬럼프 모션 &amp; TableBloodPuddle 실시간 혈흔 확산, 룰렛 전용 BGM 전환 구현</div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="turn-badge"><span>TURN #31 &amp; #35 · 전방 리닝 카메라 &amp; 팔꿈치·주먹 파지·UI 확장</span><span>2026-10-25~26</span></div>
+            <blockquote>“고개를 내리면 카메라가 앞으로 살짝 이동하면서 아래를 바라보게 해줘. 팔꿈치 방향도 수정해주고 총을 잡을때 주먹을 쥐게 해줘. 방아쇠를 당긴 사람부터 카드를 내게 해줘.”</blockquote>
+            <div class="prompt-result">✔ Look-Down 전방 리닝(+0.16m), 팔꿈치 하방 폴 벡터 &amp; 손가락 주먹 파지, 룰렛 생존자 선공 적용</div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="turn-badge"><span>TURN #36 ~ #37 · 상시 자유 시점, 수평 뒷면 카드 &amp; 앞사람 선택 공개</span><span>2026-10-27</span></div>
+            <blockquote>“엔터 눌렀을때 바로 채팅을 칠수 있게 해주고 마우스도 클릭 없이 둘러볼수 있도록 해줘. 카드 낼때 테이블에 뒷면 수평으로 내고 거짓말을 외쳤을때 앞사람 카드만 뒤집도록 해줘.”</blockquote>
+            <div class="prompt-result">✔ 엔터키 즉시 포커스 채팅, 무클릭 자유 시점, 카드 100% 수평 은폐 &amp; 피의자 카드만 선택 플립</div>
+          </div>
+
+          <div class="prompt-item">
+            <div class="turn-badge"><span>TURN #38 · 턴 연동 스마트 덱, 2단계 총 파지, 손목 교정 &amp; 테이블 밀착 사망</span><span>2026-10-27</span></div>
+            <blockquote>“내 차례일때는 덱이 확대되면서 마우스를 움직여도 화면이 움직이지 않게 해주고, 내 차례가 아닐때는 카드가 절반 아래에 박혀서 왼쪽이 제일 앞에서 겹쳐있게 해줘. 손을 뻗고 총을 잡아서 대도록 해주고 손목 꺾임과 죽을때 얼굴이 테이블에 닿도록 수정해줘.”</blockquote>
+            <div class="prompt-result">✔ 내 턴 덱 확대/시점 잠금, 비턴 50% 매립/좌측 최전방 중첩, 손목 0° 보정, 2단계 파지 &amp; 안면 테이블 안착 완성</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- =================================================================
+         SLIDE 10 : OUTRO / Q&A / CONCLUSION
+         ================================================================= -->
+    <section class="slide" data-slide="10">
+      <div class="cover-hero">
+        <div class="anim-item">
+          <div class="cover-badge" style="background:var(--gold); color:#000;">10. CONCLUSION // THANK YOU &amp; Q&amp;A</div>
+          <h1 class="cover-main-title">
+            DEATH TABLE
+            <span style="color:var(--crimson-bright);">경청해 주셔서 감사합니다</span>
+          </h1>
+          <p class="cover-desc">
+            <b>《LIAR'S BAR : DEATH TABLE》</b> 프로젝트는 100년 된 고전 블러핑의 규칙적 재미와<br />
+            Unity 6 HDRP 1인칭 체화 공포, 그리고 AI 페어 프로그래밍을 통한 빠른 프로토타이핑 검증을 완수했습니다.
+          </p>
+          <div class="cover-meta-grid" style="margin-top:20px;">
+            <div class="cover-meta-item">
+              <small>발표자 // 학번 및 이름</small>
+              <strong style="color:var(--gold-bright);">202236028 도연</strong>
+            </div>
+            <div class="cover-meta-item">
+              <small>프로젝트 형태</small>
+              <strong>Unity 6 HDRP 데스매치 게임</strong>
+            </div>
+            <div class="cover-meta-item">
+              <small>질의응답</small>
+              <strong style="color:var(--crimson-bright);">질문(Q&amp;A) 있으시면 말씀해 주세요</strong>
+            </div>
+            <div class="cover-meta-item">
+              <small>문서 아카이브</small>
+              <strong>기획서 · 발표자료 · 작업로그 일체화</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="anim-item">
+          <div class="cover-showcase-frame" style="border-color:var(--crimson-bright);" onclick="LiarLightbox.openLightbox('assets/images/user_08_devil_death.png', 'Liar\'s Bar : Death Table — THE DEVIL 처형 연출')">
+            <img src="assets/images/user_08_devil_death.png" alt="Ending Showcase" />
+            <div class="cover-showcase-caption">
+              <span>▲ 데스 테이블 최종 처형 연출 (THE DEVIL &amp; DEAD)</span>
+              <span>🔍 클릭 시 확대</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- Bottom Slide Navigation Bar -->
+  <footer class="bottom-nav">
+    <div style="font-size:11.5px; color:var(--text-muted);">
+      ⌨️ 단축키: <b>← / → / Space</b> 슬라이드 이동 · <b>F</b> 전체화면 · <b>상단 버튼</b> 인게임 사운드 재생 · <b>이미지 클릭</b> 확대
+    </div>
+    <div id="slide-dots" class="slide-dots"></div>
+    <div class="nav-controls">
+      <button class="hud-btn" onclick="LiarDeckNav.prevSlide()">◀ 이전</button>
+      <span id="slide-counter" class="slide-counter">01 / 10</span>
+      <button class="hud-btn gold" onclick="LiarDeckNav.nextSlide()">다음 ▶</button>
+      <button class="hud-btn" onclick="LiarDeckNav.toggleFullscreen()">⛶ 전체화면</button>
+    </div>
+  </footer>
+
+  <!-- Screenshot Zoom Lightbox -->
+  <div id="lightbox" class="lightbox" onclick="LiarLightbox.closeLightbox()">
+    <img id="lightbox-img" src="" alt="Zoomed Screenshot" />
+    <div id="lightbox-caption" class="lightbox-caption"></div>
+  </div>
+
+  <script src="js/app.js"></script>
+</body>
+</html>

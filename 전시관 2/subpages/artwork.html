@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>말랑 월드 아트 & 모션 컬렉션 — 인덕 전시장</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500;700;900&family=Space+Grotesk:wght@500;700&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #080b14;
+      --card: rgba(18, 24, 42, 0.78);
+      --sky: #9fd8ff;
+      --gold: #ffd97d;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background: radial-gradient(circle at 50% 0%, #1c2848 0%, #080b14 65%);
+      color: #f4f7ff;
+      font-family: 'Noto Sans KR', sans-serif;
+      line-height: 1.7;
+      padding-bottom: 90px;
+    }
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 32px;
+      background: rgba(8, 11, 20, 0.84);
+      backdrop-filter: blur(14px);
+      border-bottom: 1px solid rgba(159, 216, 255, 0.22);
+    }
+    .back-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 9px 18px;
+      border-radius: 999px;
+      border: 1px solid var(--sky);
+      background: rgba(159, 216, 255, 0.14);
+      color: #fff;
+      text-decoration: none;
+      font-size: 13px;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+    .back-btn:hover {
+      background: rgba(159, 216, 255, 0.28);
+      transform: translateX(-2px);
+    }
+    .container {
+      max-width: 1120px;
+      margin: 0 auto;
+      padding: 48px 24px 0;
+    }
+    h1 {
+      font-size: clamp(30px, 4.2vw, 48px);
+      font-weight: 900;
+      margin-bottom: 10px;
+    }
+    .lead {
+      color: rgba(244, 247, 255, 0.78);
+      margin-bottom: 36px;
+    }
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(310px, 1fr));
+      gap: 24px;
+      margin-bottom: 42px;
+    }
+    .item {
+      background: var(--card);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 18px;
+      overflow: hidden;
+    }
+    .item img, .item video {
+      width: 100%;
+      display: block;
+      aspect-ratio: 16 / 9;
+      object-fit: cover;
+      background: #05070d;
+    }
+    .item .info {
+      padding: 16px 20px;
+    }
+    .item h3 {
+      font-size: 16px;
+      margin-bottom: 4px;
+      color: var(--gold);
+    }
+    .item p {
+      font-size: 13px;
+      color: rgba(255, 255, 255, 0.75);
+    }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <a class="back-btn" href="../index.html#work-5">← 인덕 전시장 액자 #05 로 돌아가기</a>
+    <span style="font-family:'Space Grotesk',sans-serif;font-size:12px;letter-spacing:0.18em;color:rgba(255,255,255,0.6);">EXHIBIT No.05 · ART &amp; MOTION</span>
+  </header>
+
+  <main class="container">
+    <h1>말랑 월드 아트 &amp; 모션 컬렉션</h1>
+    <p class="lead">말랑블라스트 세계관 키아트, 시네마틱 모션 클립, 스튜디오 아이덴티티 그래픽 아카이브입니다.</p>
+
+    <div class="grid">
+      <div class="item">
+        <video src="../assets/videos/mallang_clip1.mp4" autoplay muted loop playsinline controls></video>
+        <div class="info">
+          <h3>Flying to the Candy Village</h3>
+          <p>무지개 빛줄기를 따라 캔디 마을로 날아가는 4색 말랑이 시네마틱 오프닝 클립</p>
+        </div>
+      </div>
+      <div class="item">
+        <video src="../assets/videos/mallang_clip2.mp4" autoplay muted loop playsinline controls></video>
+        <div class="info">
+          <h3>Colorful Figures Float Upwards</h3>
+          <p>말랑이 캐릭터들의 부유 모션 &amp; 파스텔 라이팅 테스트 시퀀스</p>
+        </div>
+      </div>
+      <div class="item">
+        <video src="../assets/videos/mallang_clip3.mp4" autoplay muted loop playsinline controls></video>
+        <div class="info">
+          <h3>Into the Starlight Sky</h3>
+          <p>하늘 위로 떠오르는 스퀴시 피규어 연출 클립</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <div class="item">
+        <img src="../assets/images/graphic.png" alt="키아트" />
+        <div class="info">
+          <h3>말랑블라스트 메인 키아트</h3>
+          <p>천사 날개 말랑이와 4색 젤리 프렌즈 프로모션 일러스트</p>
+        </div>
+      </div>
+      <div class="item">
+        <img src="../assets/images/mallang_shot.png" alt="캔디 빌리지" />
+        <div class="info">
+          <h3>말랑 월드 배경 컨셉 아트</h3>
+          <p>파스텔 설원 &amp; 캔디 빌리지 월드 아트워크</p>
+        </div>
+      </div>
+      <div class="item">
+        <img src="../assets/images/studio_logo.png" alt="스튜디오 로고" style="object-fit:contain;padding:18px;" />
+        <div class="info">
+          <h3>MallangGames Studio Logo &amp; App Icon</h3>
+          <p>스튜디오 공식 엠블럼 및 브랜드 로고 디자인</p>
+        </div>
+      </div>
+    </div>
+  </main>
+</body>
+</html>

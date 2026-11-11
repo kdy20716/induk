@@ -1,0 +1,711 @@
+﻿<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>INDUK EXHIBITION 2026 — 김도연 가상 전시장 (시안 2)</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,600&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "./vendor/three/build/three.module.js",
+        "three/addons/": "./vendor/three/addons/"
+      }
+    }
+  </script>
+
+  <style>
+    :root {
+      --bg: #050608;
+      --gold: #d9b471;
+      --gold-soft: rgba(217, 180, 113, 0.28);
+      --accent: #ff8fc7;
+      --serif: 'Cormorant Garamond', 'Noto Serif KR', serif;
+      --sans: 'Noto Sans KR', sans-serif;
+      --grot: 'Space Grotesk', 'Noto Sans KR', sans-serif;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: #f3f1ec;
+      font-family: var(--sans);
+      -webkit-font-smoothing: antialiased;
+    }
+
+    #scene {
+      position: fixed;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      display: block;
+      z-index: 1;
+    }
+
+    body.is-hover #scene {
+      cursor: pointer;
+    }
+
+    /* 상단 진행 바 */
+    .progress-track {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 3px;
+      background: rgba(255, 255, 255, 0.06);
+      z-index: 40;
+    }
+    #progressFill {
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, #9fb8ff, var(--gold), #ff8fc7);
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+    }
+
+    /* 상단 헤더 HUD */
+    .hud-top {
+      position: fixed;
+      top: 22px;
+      left: 32px;
+      right: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 30;
+      pointer-events: none;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      pointer-events: auto;
+    }
+    .brand-mark {
+      width: 36px;
+      height: 36px;
+      border: 1px solid var(--gold-soft);
+      border-radius: 50%;
+      display: grid;
+      place-items: center;
+      font-family: var(--serif);
+      font-weight: 700;
+      font-size: 16px;
+      color: var(--gold);
+      background: rgba(10, 12, 16, 0.72);
+      backdrop-filter: blur(10px);
+    }
+    .brand-meta {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .brand-meta strong {
+      font-family: var(--grot);
+      font-size: 12px;
+      letter-spacing: 0.24em;
+      color: #f4efe6;
+    }
+    .brand-meta span {
+      font-size: 11px;
+      color: rgba(255, 255, 255, 0.52);
+      letter-spacing: 0.06em;
+    }
+
+    .hud-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      pointer-events: auto;
+    }
+    .hud-pill {
+      height: 36px;
+      padding: 0 15px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(10, 12, 18, 0.68);
+      backdrop-filter: blur(12px);
+      color: #e9e6df;
+      font-family: var(--grot);
+      font-size: 11px;
+      letter-spacing: 0.16em;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      text-decoration: none;
+      transition: border-color 0.25s, background 0.25s, transform 0.2s;
+    }
+    .hud-pill:hover {
+      border-color: var(--gold);
+      background: rgba(22, 24, 34, 0.88);
+      transform: translateY(-1px);
+    }
+    #soundBtn .sb-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.35);
+      transition: background 0.25s, box-shadow 0.25s;
+    }
+    #soundBtn.on .sb-dot {
+      background: #58f2a8;
+      box-shadow: 0 0 10px #58f2a8;
+    }
+
+    /* 우측 챕터 내비게이션 */
+    #chapterNav {
+      position: fixed;
+      right: 26px;
+      top: 50%;
+      transform: translateY(-50%);
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+      z-index: 30;
+    }
+    .nav-item {
+      background: none;
+      border: 0;
+      color: rgba(255, 255, 255, 0.48);
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 10px;
+      cursor: pointer;
+      padding: 3px 0;
+      font-family: var(--sans);
+      transition: color 0.25s;
+    }
+    .nav-label {
+      font-size: 11px;
+      letter-spacing: 0.06em;
+      opacity: 0;
+      transform: translateX(6px);
+      transition: opacity 0.25s, transform 0.25s;
+      white-space: nowrap;
+      text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+    }
+    .nav-label em {
+      font-style: normal;
+      font-family: var(--grot);
+      color: var(--gold);
+      margin-right: 6px;
+      font-size: 10px;
+      letter-spacing: 0.14em;
+    }
+    #chapterNav:hover .nav-label,
+    .nav-item.active .nav-label {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    .nav-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      border: 1px solid rgba(255, 255, 255, 0.4);
+      background: transparent;
+      transition: all 0.25s;
+    }
+    .nav-item.active {
+      color: #fff;
+    }
+    .nav-item.active .nav-dot {
+      width: 9px;
+      height: 9px;
+      background: var(--gold);
+      border-color: var(--gold);
+      box-shadow: 0 0 12px var(--gold);
+    }
+
+    /* 장면별 하단 캡션 오버레이 */
+    .stage-caption {
+      position: fixed;
+      left: 50%;
+      bottom: 58px;
+      transform: translateX(-50%);
+      width: min(740px, 90vw);
+      text-align: center;
+      z-index: 25;
+      pointer-events: none;
+      transition: opacity 0.18s linear;
+    }
+    .cap-inner {
+      margin-left: -50%;
+      margin-right: 50%;
+      width: 100%;
+    }
+    .stage-caption .eyebrow {
+      display: inline-block;
+      font-family: var(--grot);
+      font-size: 11px;
+      letter-spacing: 0.28em;
+      color: var(--gold);
+      text-transform: uppercase;
+      padding: 5px 14px;
+      border: 1px solid var(--gold-soft);
+      border-radius: 999px;
+      background: rgba(8, 10, 15, 0.65);
+      backdrop-filter: blur(8px);
+      margin-bottom: 12px;
+    }
+    .stage-caption h1,
+    .stage-caption h2 {
+      font-family: var(--serif);
+      font-weight: 600;
+      font-size: clamp(26px, 3.6vw, 44px);
+      letter-spacing: 0.04em;
+      color: #f9f6ef;
+      text-shadow: 0 6px 28px rgba(0, 0, 0, 0.85);
+      margin-bottom: 8px;
+    }
+    .stage-caption p {
+      font-size: 14px;
+      line-height: 1.65;
+      color: rgba(240, 238, 232, 0.78);
+      text-shadow: 0 2px 14px rgba(0, 0, 0, 0.9);
+    }
+    .reel-bar {
+      margin-top: 14px;
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      padding: 6px 12px;
+      border-radius: 999px;
+      background: rgba(10, 12, 18, 0.78);
+      border: 1px solid rgba(180, 205, 255, 0.24);
+      backdrop-filter: blur(10px);
+      pointer-events: auto;
+    }
+    .reel-bar button {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      color: #fff;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-family: var(--grot);
+      font-size: 11px;
+      cursor: pointer;
+    }
+    .reel-bar button:hover {
+      border-color: var(--gold);
+    }
+    #nowPlaying {
+      font-size: 12px;
+      color: #cfe0ff;
+      padding: 0 6px;
+    }
+
+    /* 갤러리 작품 설명 카드 (Placard) */
+    #placard {
+      position: fixed;
+      bottom: 48px;
+      left: 52px;
+      width: min(410px, calc(100vw - 96px));
+      padding: 24px 26px;
+      border-radius: 16px;
+      background: linear-gradient(155deg, rgba(16, 14, 18, 0.86), rgba(9, 8, 12, 0.92));
+      border: 1px solid rgba(217, 180, 113, 0.32);
+      box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(16px);
+      z-index: 26;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.25s ease, left 0.45s cubic-bezier(0.22, 1, 0.36, 1), right 0.45s cubic-bezier(0.22, 1, 0.36, 1);
+    }
+    #placard[data-side="right"] {
+      left: auto;
+      right: 76px;
+    }
+    #placard[data-side="left"] {
+      left: 52px;
+      right: auto;
+    }
+    .pl-top {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 8px;
+      font-family: var(--grot);
+      font-size: 11px;
+      letter-spacing: 0.2em;
+      color: var(--gold);
+    }
+    .pl-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 4px;
+    }
+    .pl-genre {
+      font-family: var(--grot);
+      font-size: 12px;
+      color: var(--accent);
+      letter-spacing: 0.06em;
+      margin-bottom: 12px;
+    }
+    .pl-desc {
+      font-size: 13px;
+      line-height: 1.65;
+      color: rgba(240, 236, 228, 0.8);
+      margin-bottom: 14px;
+    }
+    .pl-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 16px;
+    }
+    .pl-tags span {
+      font-family: var(--grot);
+      font-size: 10px;
+      letter-spacing: 0.08em;
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      color: rgba(255, 255, 255, 0.82);
+    }
+    .pl-dive {
+      width: 100%;
+      padding: 12px 16px;
+      border-radius: 10px;
+      border: 1px solid var(--gold);
+      background: linear-gradient(135deg, rgba(217, 180, 113, 0.22), rgba(217, 180, 113, 0.06));
+      color: #fff4dc;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.06em;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      transition: background 0.25s, transform 0.2s, box-shadow 0.25s;
+    }
+    .pl-dive:hover {
+      background: linear-gradient(135deg, rgba(217, 180, 113, 0.38), rgba(217, 180, 113, 0.14));
+      box-shadow: 0 0 24px rgba(217, 180, 113, 0.32);
+      transform: translateY(-1px);
+    }
+
+    /* 하단 스크롤 힌트 */
+    .hud-bottom {
+      position: fixed;
+      bottom: 18px;
+      left: 32px;
+      right: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      z-index: 24;
+      pointer-events: none;
+      font-family: var(--grot);
+      font-size: 11px;
+      letter-spacing: 0.18em;
+      color: rgba(255, 255, 255, 0.5);
+    }
+    #scrollHint {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: opacity 0.3s;
+    }
+    .wheel-icon {
+      width: 16px;
+      height: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.45);
+      border-radius: 10px;
+      position: relative;
+    }
+    .wheel-icon::after {
+      content: '';
+      position: absolute;
+      left: 50%;
+      top: 5px;
+      width: 2px;
+      height: 5px;
+      background: var(--gold);
+      transform: translateX(-50%);
+      border-radius: 2px;
+      animation: wheelScroll 1.5s infinite;
+    }
+    @keyframes wheelScroll {
+      0% { opacity: 1; transform: translate(-50%, 0); }
+      100% { opacity: 0; transform: translate(-50%, 8px); }
+    }
+
+    /* 액자 호버 시 따라다니는 뱃지 */
+    #cursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      z-index: 50;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+    body.is-hover #cursor {
+      opacity: 1;
+    }
+    #cursorLabel {
+      display: inline-block;
+      transform: translate(16px, -50%);
+      padding: 7px 13px;
+      border-radius: 999px;
+      background: rgba(12, 10, 16, 0.88);
+      border: 1px solid var(--gold);
+      color: #fff2d6;
+      font-family: var(--grot);
+      font-size: 10px;
+      letter-spacing: 0.2em;
+      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.6);
+      white-space: nowrap;
+    }
+
+    /* 마리오64 워프 오버레이 */
+    #warp {
+      position: fixed;
+      inset: 0;
+      z-index: 60;
+      pointer-events: none;
+      opacity: 0;
+      background: radial-gradient(circle at center, rgba(255, 255, 255, 0.95) 0%, var(--accent, #ffcf7a) 45%, #050608 100%);
+      transition: opacity 0.75s ease;
+    }
+    body.warp-flash #warp {
+      opacity: 1;
+    }
+
+    /* 인트로 로더 & 입장 게이트 */
+    #loader {
+      position: fixed;
+      inset: 0;
+      z-index: 100;
+      background: radial-gradient(circle at 50% 35%, #131622 0%, #050608 75%);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      text-align: center;
+      transition: opacity 0.7s ease, visibility 0.7s ease;
+    }
+    #loader.hidden {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+    .ld-badge {
+      font-family: var(--grot);
+      font-size: 11px;
+      letter-spacing: 0.34em;
+      color: var(--gold);
+      margin-bottom: 16px;
+    }
+    .ld-title {
+      font-family: var(--serif);
+      font-size: clamp(36px, 5vw, 64px);
+      font-weight: 600;
+      letter-spacing: 0.08em;
+      color: #faf6ee;
+      margin-bottom: 8px;
+    }
+    .ld-sub {
+      font-size: 14px;
+      color: rgba(255, 255, 255, 0.65);
+      margin-bottom: 32px;
+      line-height: 1.6;
+    }
+    .ld-bar-wrap {
+      width: min(320px, 78vw);
+      height: 2px;
+      background: rgba(255, 255, 255, 0.12);
+      overflow: hidden;
+      margin-bottom: 10px;
+    }
+    #loaderBar {
+      width: 100%;
+      height: 100%;
+      background: var(--gold);
+      transform-origin: 0 50%;
+      transform: scaleX(0.1);
+      transition: transform 0.25s ease;
+    }
+    #loaderPct {
+      font-family: var(--grot);
+      font-size: 11px;
+      letter-spacing: 0.22em;
+      color: rgba(255, 255, 255, 0.5);
+      margin-bottom: 28px;
+    }
+    .ld-actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      justify-content: center;
+      opacity: 0.35;
+      pointer-events: none;
+      transition: opacity 0.35s ease;
+    }
+    #loader.ready .ld-actions {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .btn-enter {
+      padding: 14px 26px;
+      border-radius: 999px;
+      border: 1px solid var(--gold);
+      background: linear-gradient(135deg, rgba(217, 180, 113, 0.28), rgba(217, 180, 113, 0.08));
+      color: #fff6e3;
+      font-family: var(--sans);
+      font-weight: 600;
+      font-size: 13px;
+      letter-spacing: 0.08em;
+      cursor: pointer;
+      transition: all 0.25s;
+    }
+    .btn-enter:hover {
+      background: linear-gradient(135deg, rgba(217, 180, 113, 0.45), rgba(217, 180, 113, 0.18));
+      box-shadow: 0 0 28px rgba(217, 180, 113, 0.35);
+      transform: translateY(-1px);
+    }
+    .btn-enter.ghost {
+      border-color: rgba(255, 255, 255, 0.22);
+      background: rgba(255, 255, 255, 0.04);
+      color: rgba(255, 255, 255, 0.8);
+    }
+    .btn-enter.ghost:hover {
+      border-color: rgba(255, 255, 255, 0.5);
+    }
+  </style>
+</head>
+<body>
+  <canvas id="scene"></canvas>
+
+  <!-- 상단 진행 바 -->
+  <div class="progress-track"><div id="progressFill"></div></div>
+
+  <!-- 상단 HUD -->
+  <header class="hud-top">
+    <div class="brand">
+      <div class="brand-mark">ID</div>
+      <div class="brand-meta">
+        <strong>INDUK EXHIBITION 2026</strong>
+        <span>202236028 김도연 · VR &amp; GAME SHOWCASE (시안 2)</span>
+      </div>
+    </div>
+    <div class="hud-controls">
+      <a class="hud-pill" href="../전시관 1/index.html" title="전시관 1 바로가기">전시관 1 보기 ↗</a>
+      <button id="soundBtn" class="hud-pill" type="button">
+        <span class="sb-dot"></span>
+        <span class="sb-text">SOUND OFF</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- 우측 챕터 점프 내비게이션 -->
+  <nav id="chapterNav" aria-label="전시장 구역 이동"></nav>
+
+  <!-- Scene 1: 오프닝 로비 캡션 -->
+  <section class="stage-caption" data-stop="0">
+    <span class="eyebrow">SCENE 01 · EXHIBITION LOBBY</span>
+    <h1>INDUK VIRTUAL EXHIBITION</h1>
+    <p>인덕대학교 전시관에 오신 것을 환영합니다.<br />마우스 휠을 내리면 빔프로젝터 쇼릴과 내부 액자 갤러리로 이어집니다. 중앙 작품을 클릭하면 바로 입장할 수 있습니다.</p>
+  </section>
+
+  <!-- Scene 2: 빔프로젝터 쇼릴 캡션 -->
+  <section class="stage-caption" data-stop="1">
+    <span class="eyebrow">SCENE 02 · PROJECTOR SHOWREEL</span>
+    <h2>PROJECTOR SCREEN ON</h2>
+    <p>천장 빔프로젝터에서 작품 영상 모음을 상영합니다. 휠을 더 내리면 스크린 뒤의 갤러리 대문이 열립니다.</p>
+    <div class="reel-bar">
+      <button id="reelPrev" type="button">◀ 이전 영상</button>
+      <span id="nowPlaying">말랑블라스트 — 1분 소개 영상</span>
+      <button id="reelNext" type="button">다음 영상 ▶</button>
+    </div>
+  </section>
+
+  <!-- Scene 3: 문 개방 캡션 -->
+  <section class="stage-caption" data-stop="2">
+    <span class="eyebrow">SCENE 03 · THE INNER GATE</span>
+    <h2>ENTERING THE INNER GALLERY</h2>
+    <p>전시장 뒷문이 열렸습니다. 휠을 내려 갤러리 안쪽의 작품 액자들을 하나씩 감상하세요.</p>
+  </section>
+
+  <!-- Scene 4: 액자 상세 명패 (Placard) -->
+  <aside id="placard">
+    <div class="pl-top">
+      <span class="pl-no">No.01 / 05</span>
+      <span class="pl-en">MALANG BLAST</span>
+    </div>
+    <h3 class="pl-title">말랑블라스트</h3>
+    <div class="pl-genre">Mobile Casual Puzzle · Unity</div>
+    <p class="pl-desc"></p>
+    <div class="pl-tags"></div>
+    <button id="diveBtn" class="pl-dive" type="button">
+      <span>액자 클릭 · 그림 속으로 뛰어들기 (Mario 64 Warp)</span>
+      <span>→</span>
+    </button>
+  </aside>
+
+  <!-- Scene 5/엔딩 캡션 -->
+  <section class="stage-caption" data-stop="8">
+    <span class="eyebrow">FINALE · END OF HALL</span>
+    <h2>THANK YOU FOR VISITING</h2>
+    <p>원하는 작품 액자로 돌아가 클릭하면 마리오 64처럼 그림이 출렁이며 작품 페이지로 이동합니다.</p>
+    <div class="reel-bar">
+      <button type="button" data-goto="0">로비 처음으로 ↑</button>
+      <button type="button" data-goto="3">첫 번째 액자로 이동</button>
+    </div>
+  </section>
+
+  <!-- 하단 상태 바 -->
+  <footer class="hud-bottom">
+    <div id="stopLabel">01 — LOBBY</div>
+    <div id="scrollHint">
+      <span class="wheel-icon"></span>
+      <span>SCROLL WHEEL · CLICK PAINTING TO DIVE IN</span>
+    </div>
+  </footer>
+
+  <!-- 액자 호버 커서 라벨 -->
+  <div id="cursor"><span id="cursorLabel">CLICK · DIVE IN</span></div>
+
+  <!-- 마리오64 워프 화면 플래시 -->
+  <div id="warp"></div>
+
+  <!-- 입장 로더 -->
+  <div id="loader">
+    <div class="ld-badge">INDUK UNIVERSITY · GRADUATION SHOWCASE</div>
+    <h1 class="ld-title">INDUK EXHIBITION HALL</h1>
+    <p class="ld-sub">
+      로비 대표 작품 쇼케이스 → 빔프로젝터 영상 상영 → 갤러리 게이트 개방 → 마리오 64 액자 워프<br />
+      202236028 김도연 작품 전시장 (시안 2)
+    </p>
+    <div class="ld-bar-wrap"><div id="loaderBar"></div></div>
+    <div id="loaderPct">LOADING...</div>
+    <div class="ld-actions">
+      <button id="enterSound" class="btn-enter" type="button">전시장 입장하기 (SOUND ON)</button>
+      <button id="enterMute" class="btn-enter ghost" type="button">무음 모드로 입장</button>
+    </div>
+  </div>
+
+  <script type="module" src="./src/main.js"></script>
+</body>
+</html>

@@ -1,0 +1,1554 @@
+﻿<!DOCTYPE html>
+<html lang="ko" class="dark scroll-smooth">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SILENT TRIGGER : 침묵의 방아쇠 | 심리전 서바이벌</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts: Cinzel, JetBrains Mono, Noto Serif KR -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;700;900&family=JetBrains+Mono:wght@300;400;600;700&family=Noto+Serif+KR:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --bg-abyss: #040406;
+      --crimson: #b80f0a;
+      --crimson-bright: #ff1e1e;
+      --gold-muted: #c5a059;
+      --mouse-x: 50vw;
+      --mouse-y: 50vh;
+      --pulse-duration: 0.85s;
+      --vignette-alpha: 0.18;
+    }
+
+    * {
+      box-sizing: border-box;
+      user-select: none;
+    }
+
+    @media (pointer: fine) {
+      * {
+        cursor: none !important;
+      }
+    }
+
+    body {
+      background-color: var(--bg-abyss);
+      color: #e5e5e7;
+      font-family: 'Noto Serif KR', serif;
+      overflow-x: hidden;
+    }
+
+    .font-cinzel { font-family: 'Cinzel', serif; }
+    .font-mono-tech { font-family: 'JetBrains Mono', monospace; }
+    .font-serif-kr { font-family: 'Noto Serif KR', serif; }
+
+    /* 필름 그레인 노이즈 오버레이 */
+    .noise-layer {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9990;
+      opacity: 0.055;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
+    }
+
+    /* 심박수 연동 붉은 비네팅 */
+    .tension-vignette {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 800;
+      box-shadow: inset 0 0 160px rgba(184, 15, 10, var(--vignette-alpha));
+      animation: pulse-vignette var(--pulse-duration) infinite ease-in-out;
+      transition: box-shadow 0.3s ease;
+    }
+
+    @keyframes pulse-vignette {
+      0%, 100% { transform: scale(1); opacity: 0.65; }
+      18% { transform: scale(1.012); opacity: 1; }
+      35% { transform: scale(1); opacity: 0.75; }
+      52% { transform: scale(1.018); opacity: 1; }
+    }
+
+    /* 마우스 스포트라이트 속에 숨겨진 진실 레이어 */
+    .spotlight-whispers {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 5;
+      overflow: hidden;
+      -webkit-mask-image: radial-gradient(circle 250px at var(--mouse-x) var(--mouse-y), rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 55%, transparent 100%);
+      mask-image: radial-gradient(circle 250px at var(--mouse-x) var(--mouse-y), rgba(0,0,0,1) 0%, rgba(0,0,0,0.4) 55%, transparent 100%);
+    }
+
+    /* 커스텀 타겟 레티클 커서 */
+    #customCursor {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 34px;
+      height: 34px;
+      border: 1px solid rgba(255, 30, 30, 0.75);
+      border-radius: 50%;
+      pointer-events: none;
+      z-index: 10000;
+      transform: translate(-50%, -50%);
+      transition: width 0.18s ease, height 0.18s ease, border-color 0.18s ease, background-color 0.18s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    #customCursor::before,
+    #customCursor::after {
+      content: '';
+      position: absolute;
+      background: rgba(255, 30, 30, 0.6);
+    }
+    #customCursor::before { width: 10px; height: 1px; }
+    #customCursor::after { width: 1px; height: 10px; }
+
+    #customCursor.cursor-hover {
+      width: 54px;
+      height: 54px;
+      border-color: #ff1e1e;
+      background-color: rgba(184, 15, 10, 0.15);
+      box-shadow: 0 0 20px rgba(255, 30, 30, 0.4);
+    }
+
+    /* 기밀 검열 바 애니메이션 */
+    .redacted-bar {
+      position: relative;
+      display: inline-block;
+      color: #ff2a2a;
+      padding: 0 8px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+
+    .redacted-bar::after {
+      content: 'CLASSIFIED';
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.65em;
+      letter-spacing: 0.25em;
+      color: #444;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: absolute;
+      inset: -2px 0;
+      background: #141418;
+      border: 1px solid #2e2e36;
+      transform-origin: right center;
+      transition: transform 0.85s cubic-bezier(0.77, 0, 0.175, 1) 0.15s;
+    }
+
+    .narrative-item.revealed .redacted-bar::after,
+    .redacted-bar.force-reveal::after {
+      transform: scaleX(0);
+    }
+
+    /* 스캐너 레이저 애니메이션 */
+    .scan-laser {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, #ff1e1e, #fff, #ff1e1e, transparent);
+      box-shadow: 0 0 18px 4px rgba(255, 30, 30, 0.75);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .scanning .scan-laser {
+      opacity: 1;
+      animation: laser-sweep 1.6s ease-in-out infinite;
+    }
+
+    @keyframes laser-sweep {
+      0% { top: 4%; }
+      50% { top: 94%; }
+      100% { top: 4%; }
+    }
+
+    /* 3D 카드 플립 연출 */
+    .perspective-table {
+      perspective: 1200px;
+    }
+
+    .playing-card {
+      width: 135px;
+      height: 196px;
+      position: relative;
+      transform-style: preserve-3d;
+      transition: transform 0.8s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.3s ease;
+    }
+
+    @media (max-width: 640px) {
+      .playing-card {
+        width: 98px;
+        height: 145px;
+      }
+    }
+
+    .playing-card:hover {
+      transform: translateY(-10px) rotateX(6deg);
+      box-shadow: 0 20px 40px rgba(184, 15, 10, 0.35);
+    }
+
+    .playing-card.flipped {
+      transform: rotateY(180deg) translateY(-8px);
+    }
+
+    .card-face {
+      position: absolute;
+      inset: 0;
+      backface-visibility: hidden;
+      border-radius: 10px;
+      overflow: hidden;
+    }
+
+    .card-back {
+      background: radial-gradient(circle at center, #1d0707 0%, #09090c 100%);
+      border: 1px solid rgba(197, 160, 89, 0.45);
+      box-shadow: 0 12px 30px rgba(0, 0, 0, 0.85);
+    }
+
+    .card-front {
+      transform: rotateY(180deg);
+      background: linear-gradient(145deg, #16161a 0%, #08080a 100%);
+      border: 2px solid #c5a059;
+      box-shadow: 0 0 35px rgba(184, 15, 10, 0.45);
+    }
+
+    /* 화면 격렬한 흔들림 (판정 순간) */
+    @keyframes violent-shake {
+      0%, 100% { transform: translate(0, 0) rotate(0deg); }
+      10% { transform: translate(-18px, -12px) rotate(-1.5deg); }
+      20% { transform: translate(18px, 10px) rotate(1.5deg); }
+      30% { transform: translate(-14px, 14px) rotate(-1deg); }
+      40% { transform: translate(14px, -10px) rotate(1deg); }
+      50% { transform: translate(-10px, 8px) rotate(-0.8deg); }
+      65% { transform: translate(8px, -6px) rotate(0.5deg); }
+      80% { transform: translate(-4px, 4px) rotate(0deg); }
+    }
+
+    .shake-screen {
+      animation: violent-shake 0.65s cubic-bezier(.36,.07,.19,.97) both;
+    }
+
+    /* 글리치 타이틀 효과 */
+    .glitch-title {
+      position: relative;
+      display: inline-block;
+    }
+    .glitch-title::before,
+    .glitch-title::after {
+      content: attr(data-text);
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0.75;
+    }
+    .glitch-title::before {
+      color: #ff1e1e;
+      z-index: -1;
+      animation: glitch-anim-1 3.5s infinite linear alternate-reverse;
+    }
+    .glitch-title::after {
+      color: #c5a059;
+      z-index: -2;
+      animation: glitch-anim-2 2.8s infinite linear alternate-reverse;
+    }
+
+    @keyframes glitch-anim-1 {
+      0%, 92%, 100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+      94% { transform: translate(-4px, 2px); clip-path: inset(20% 0 50% 0); }
+      96% { transform: translate(4px, -2px); clip-path: inset(60% 0 10% 0); }
+      98% { transform: translate(-2px, 0); clip-path: inset(40% 0 30% 0); }
+    }
+
+    @keyframes glitch-anim-2 {
+      0%, 90%, 100% { transform: translate(0); clip-path: inset(0 0 0 0); }
+      93% { transform: translate(3px, -1px); clip-path: inset(10% 0 70% 0); }
+      97% { transform: translate(-3px, 2px); clip-path: inset(75% 0 5% 0); }
+    }
+  </style>
+</head>
+
+<body class="relative selection:bg-red-900 selection:text-white">
+
+  <!-- 필름 그레인 & 심장박동 비네팅 & 레드 플래시 -->
+  <div class="noise-layer"></div>
+  <div class="tension-vignette" id="vignetteLayer"></div>
+  <div id="redFlashOverlay" class="fixed inset-0 bg-red-600 pointer-events-none z-[9995] opacity-0 transition-opacity duration-500"></div>
+  <div id="customCursor" class="hidden md:flex"></div>
+
+  <!-- 0. 오디오 활성화 & 취조실 입장 게이트 모달 -->
+  <div id="entryGateModal" class="fixed inset-0 z-[9999] bg-[#030305] flex flex-col items-center justify-center px-6 text-center transition-opacity duration-700">
+    <div class="max-w-xl w-full border border-red-900/50 bg-[#08080c]/95 p-8 md:p-12 shadow-[0_0_90px_rgba(184,15,10,0.28)] relative overflow-hidden">
+      <div class="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-red-600 to-transparent"></div>
+      <div class="font-mono-tech text-xs tracking-[0.35em] text-red-500 mb-3 uppercase flex items-center justify-center gap-2">
+        <span class="w-2 h-2 rounded-full bg-red-600 animate-ping"></span>
+        CONFIDENTIAL INTERROGATION ROOM #04
+      </div>
+      <h1 class="font-cinzel text-3xl md:text-5xl font-black tracking-widest text-white mb-2">
+        SILENT TRIGGER
+      </h1>
+      <p class="text-sm md:text-base tracking-[0.3em] text-red-500 font-bold mb-6">
+        침묵의 방아쇠 : 심리전 서바이벌
+      </p>
+      <p class="text-zinc-400 text-sm md:text-base leading-relaxed mb-8 font-light">
+        이 웹사이트는 <span class="text-zinc-200 font-medium">실시간 생체 심박수 사운드(Web Audio API)</span>와 <span class="text-zinc-200 font-medium">미세 표정 추적 인터랙션</span>을 포함하고 있습니다.<br>
+        스크롤을 내릴수록 당신의 심박수가 상승하며, 테이블 위의 거짓말이 드러납니다.
+      </p>
+      <div class="flex flex-col sm:flex-row gap-4 justify-center">
+        <button id="btnEnterSoundOn" class="interactive-el px-8 py-4 bg-red-800 hover:bg-red-600 text-white font-mono-tech text-xs md:text-sm tracking-[0.2em] font-bold border border-red-500 shadow-[0_0_30px_rgba(220,38,38,0.45)] transition-all">
+          [ 테이블에 착석하기 (SOUND ON) ]
+        </button>
+        <button id="btnEnterMuted" class="interactive-el px-6 py-4 bg-zinc-900/80 hover:bg-zinc-800 text-zinc-400 hover:text-white font-mono-tech text-xs tracking-[0.15em] border border-zinc-700 transition-all">
+          [ 무음 모드로 입장 ]
+        </button>
+      </div>
+      <div class="mt-6 font-mono-tech text-[11px] text-zinc-600">
+        MADE WITH UNITY HDRP // PSYCHOLOGICAL WARFARE PROJECT
+      </div>
+    </div>
+  </div>
+
+  <!-- 마우스 스포트라이트 아래 드러나는 배경 속마음 (Hidden Whispers) -->
+  <div class="spotlight-whispers select-none">
+    <span class=" absolute top-[14%] left-[8%] font-cinzel text-3xl md:text-5xl font-black text-red-700/35 tracking-widest -rotate-6">전부 거짓말이야</span>
+    <span class="absolute top-[24%] right-[10%] font-mono-tech text-xl md:text-3xl font-bold text-red-600/30 tracking-widest rotate-3">PUPIL DILATION +84%</span>
+    <span class="absolute top-[42%] left-[15%] font-serif-kr text-2xl md:text-4xl font-black text-red-800/35 tracking-widest">눈동자가 흔들리고 있어</span>
+    <span class="absolute top-[58%] right-[14%] font-cinzel text-3xl md:text-5xl font-black text-red-700/30 tracking-[0.25em] -rotate-3">TRUST NO ONE</span>
+    <span class="absolute top-[73%] left-[12%] font-serif-kr text-2xl md:text-4xl font-bold text-red-600/35 tracking-widest rotate-2">웃고 있지만 왼손이 떨려</span>
+    <span class="absolute top-[88%] right-[18%] font-serif-kr text-3xl md:text-5xl font-black text-red-700/40 tracking-widest">지금 방아쇠를 당겨</span>
+  </div>
+
+  <!-- 고정 바이오메트릭 거짓말 탐지기 HUD -->
+  <header class="fixed inset-2 sm:inset-5 pointer-events-none z-[900] border border-white/10 flex flex-col justify-between p-3 sm:p-5">
+    <!-- 상단 HUD 바 -->
+    <div class="flex items-start justify-between gap-2">
+      <div class="flex flex-col gap-1">
+        <div class="flex items-center gap-2 font-mono-tech text-[10px] sm:text-xs tracking-[0.2em] text-zinc-400">
+          <span class="w-2.5 h-2.5 rounded-full bg-red-600 animate-pulse"></span>
+          <span>LIVE // INTERROGATION TABLE #04</span>
+        </div>
+        <div class="font-mono-tech text-[10px] text-zinc-500 hidden sm:block">
+          CAM_01: FACIAL MICRO-SHADER ACTIVE | AUDIO: 3D BINAURAL
+        </div>
+      </div>
+
+      <!-- 우측 상단 실시간 심박수 + ECG 파형 + 사운드 토글 -->
+      <div class="flex items-center gap-3 sm:gap-5 pointer-events-auto bg-black/75 border border-red-900/40 px-3 py-2 backdrop-blur-md">
+        <button id="btnSoundToggle" class="interactive-el font-mono-tech text-[10px] sm:text-xs px-2.5 py-1 border border-zinc-700 hover:border-red-500 text-zinc-300 transition">
+          SOUND: OFF
+        </button>
+        <div class="hidden md:block w-36 h-9 bg-zinc-950/90 border border-zinc-800 relative overflow-hidden">
+          <canvas id="ecgCanvas" width="144" height="36" class="w-full h-full"></canvas>
+        </div>
+        <div class="text-right">
+          <div id="hudBpmValue" class="font-mono-tech text-lg sm:text-2xl font-bold text-red-500 leading-none drop-shadow-[0_0_10px_rgba(255,30,30,0.6)]">
+            72 BPM
+          </div>
+          <span class="font-mono-tech text-[9px] tracking-[0.2em] text-zinc-500 block">HEART RATE</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하단 HUD 바 -->
+    <div class="flex items-end justify-between font-mono-tech text-[10px] sm:text-xs text-zinc-400">
+      <div class="bg-black/70 border border-white/5 px-3 py-2 backdrop-blur-sm space-y-0.5">
+        <div>PUPIL DILATION: <span id="hudPupilValue" class="text-amber-400 font-semibold">3.2 mm</span></div>
+        <div>CORTISOL / STRESS: <span id="hudStressState" class="text-zinc-300 font-semibold">STABLE (18%)</span></div>
+      </div>
+
+      <!-- 빠른 섹션 네비게이션 -->
+      <div class="hidden lg:flex items-center gap-4 pointer-events-auto bg-black/75 border border-white/10 px-4 py-2 backdrop-blur-sm text-[11px] tracking-widest">
+        <a href="#sec-hero" class="interactive-el hover:text-red-500 transition">01. EYES</a>
+        <span class="text-zinc-700">/</span>
+        <a href="#sec-dossier" class="interactive-el hover:text-red-500 transition">02. RULES</a>
+        <span class="text-zinc-700">/</span>
+        <a href="#sec-scanner" class="interactive-el hover:text-red-500 transition">03. SUSPECTS</a>
+        <span class="text-zinc-700">/</span>
+        <a href="#sec-climax" class="interactive-el text-red-400 font-bold hover:text-red-300 transition">04. PLAY BLUFF</a>
+      </div>
+
+      <div class="bg-black/70 border border-white/5 px-3 py-2 text-right hidden sm:block">
+        <div class="text-amber-500/90 tracking-widest">UNITY 6 // HDRP</div>
+        <div class="text-[10px] text-zinc-500">DECEPTION ENGINE v2.4</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- SECTION 1: HERO (어둠 속 인간의 눈동자 트래킹 & 타이틀) -->
+  <section id="sec-hero" class="relative min-h-screen flex flex-col items-center justify-center px-6 py-28 z-10 overflow-hidden">
+    <!-- 어둠 속 마우스를 따라 움직이는 인간의 두 눈 (SVG Interactive Eyes) -->
+    <div id="eyesContainer" class="interactive-el relative w-full max-w-2xl mb-6 select-none group" title="상대의 눈동자가 당신의 커서를 주시하고 있습니다">
+      <div class="text-center font-mono-tech text-[10px] tracking-[0.3em] text-zinc-500 mb-2">
+        [ SUBJECT EYE TRACKING ACTIVE — 마우스를 움직여 상대의 동공 반응을 확인하십시오 ]
+      </div>
+      <svg viewBox="0 0 700 190" class="w-full h-auto drop-shadow-[0_0_45px_rgba(184,15,10,0.35)]">
+        <defs>
+          <radialGradient id="scleraGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#d8d2d2"/>
+            <stop offset="70%" stop-color="#9e8c8c"/>
+            <stop offset="100%" stop-color="#3a1212"/>
+          </radialGradient>
+          <radialGradient id="irisGrad" cx="50%" cy="50%" r="50%">
+            <stop offset="0%" stop-color="#1a0d08"/>
+            <stop offset="55%" stop-color="#4e2315"/>
+            <stop offset="85%" stop-color="#8c1d15"/>
+            <stop offset="100%" stop-color="#090505"/>
+          </radialGradient>
+          <clipPath id="leftEyeClip">
+            <path id="leftEyeLidPath" d="M 80 95 Q 195 25 310 95 Q 195 165 80 95 Z" />
+          </clipPath>
+          <clipPath id="rightEyeClip">
+            <path id="rightEyeLidPath" d="M 390 95 Q 505 25 620 95 Q 505 165 390 95 Z" />
+          </clipPath>
+        </defs>
+
+        <!-- 어두운 안와 그림자 -->
+        <ellipse cx="195" cy="95" rx="135" ry="65" fill="rgba(0,0,0,0.85)" />
+        <ellipse cx="505" cy="95" rx="135" ry="65" fill="rgba(0,0,0,0.85)" />
+
+        <!-- 왼쪽 눈 (Left Eye) -->
+        <g clip-path="url(#leftEyeClip)">
+          <rect x="60" y="20" width="270" height="150" fill="url(#scleraGrad)" />
+          <!-- 충혈된 실핏줄 -->
+          <g class="blood-vessels opacity-45 transition-opacity duration-300" stroke="#9e1313" stroke-width="1.2" fill="none">
+            <path d="M 85 95 Q 115 80 135 88 M 115 80 Q 125 70 140 72" />
+            <path d="M 300 95 Q 270 110 250 100 M 270 110 Q 260 125 245 120" />
+          </g>
+          <!-- 왼쪽 홍채 & 동공 그룹 -->
+          <g id="leftEyeball" transform="translate(195, 95)">
+            <circle r="38" fill="url(#irisGrad)" />
+            <circle class="pupil-circle transition-all duration-150" r="16" fill="#030304" />
+            <circle cx="-10" cy="-10" r="5" fill="rgba(255,255,255,0.75)" />
+            <circle cx="8" cy="8" r="2.5" fill="rgba(255,30,30,0.5)" />
+          </g>
+          <!-- 눈꺼풀 음영 -->
+          <path d="M 80 95 Q 195 25 310 95" fill="none" stroke="#050507" stroke-width="12" opacity="0.7"/>
+        </g>
+        <!-- 왼쪽 눈 테두리 -->
+        <path d="M 80 95 Q 195 25 310 95 Q 195 165 80 95 Z" fill="none" stroke="#2a0c0c" stroke-width="4" />
+
+        <!-- 오른쪽 눈 (Right Eye) -->
+        <g clip-path="url(#rightEyeClip)">
+          <rect x="370" y="20" width="270" height="150" fill="url(#scleraGrad)" />
+          <!-- 충혈된 실핏줄 -->
+          <g class="blood-vessels opacity-45 transition-opacity duration-300" stroke="#9e1313" stroke-width="1.2" fill="none">
+            <path d="M 395 95 Q 425 108 445 98 M 425 108 Q 435 120 450 118" />
+            <path d="M 610 95 Q 580 82 560 92 M 580 82 Q 570 68 555 75" />
+          </g>
+          <!-- 오른쪽 홍채 & 동공 그룹 -->
+          <g id="rightEyeball" transform="translate(505, 95)">
+            <circle r="38" fill="url(#irisGrad)" />
+            <circle class="pupil-circle transition-all duration-150" r="16" fill="#030304" />
+            <circle cx="-10" cy="-10" r="5" fill="rgba(255,255,255,0.75)" />
+            <circle cx="8" cy="8" r="2.5" fill="rgba(255,30,30,0.5)" />
+          </g>
+          <path d="M 390 95 Q 505 25 620 95" fill="none" stroke="#050507" stroke-width="12" opacity="0.7"/>
+        </g>
+        <path d="M 390 95 Q 505 25 620 95 Q 505 165 390 95 Z" fill="none" stroke="#2a0c0c" stroke-width="4" />
+      </svg>
+    </div>
+
+    <!-- 메인 타이틀 & 슬로건 -->
+    <div class="font-mono-tech text-xs sm:text-sm tracking-[0.4em] text-red-500 uppercase mb-3 text-center">
+      HUMAN PSYCHOLOGICAL WARFARE // NO MASKS, ONLY FACES
+    </div>
+
+    <h1 class="font-cinzel text-4xl sm:text-7xl lg:text-8xl font-black tracking-wider text-white text-center leading-none glitch-title" data-text="SILENT TRIGGER">
+      SILENT TRIGGER
+    </h1>
+    <div class="text-xl sm:text-3xl font-bold tracking-[0.35em] text-red-600 mt-3 mb-8 text-center">
+      침묵의 방아쇠
+    </div>
+
+    <p class="max-w-2xl text-center text-zinc-300 text-sm sm:text-lg leading-relaxed font-light mb-10">
+      가면 뒤에 숨은 동물이 아닌, 피와 살을 가진 <strong class="text-white font-semibold">인간의 민낯</strong>을 마주하십시오.<br>
+      유니티 고해상도 페이셜 셰이더로 구현된 <span class="text-red-400">0.2초의 미세 표정 경련</span>, 가빠지는 거친 숨소리, 그리고 라이어 게임을 방불케 하는 <span class="text-amber-400">치밀한 심리 유도</span>.<br>
+      이 테이블에서 걸어 나갈 수 있는 생존자는 단 한 명뿐입니다.
+    </p>
+
+    <div class="flex flex-wrap items-center justify-center gap-4">
+      <a href="#sec-climax" class="interactive-el px-8 py-4 bg-red-800/90 hover:bg-red-600 text-white font-mono-tech text-xs sm:text-sm tracking-[0.2em] font-bold border border-red-400 shadow-[0_0_35px_rgba(220,38,38,0.4)] transition-all">
+        [ 실전 블러핑 테이블 체험하기 ]
+      </a>
+      <a href="#sec-scanner" class="interactive-el px-7 py-4 bg-zinc-900/90 hover:bg-zinc-800 text-zinc-200 font-mono-tech text-xs sm:text-sm tracking-[0.2em] border border-zinc-700 transition-all">
+        [ 용의자 미세표정 스캐너 ]
+      </a>
+    </div>
+
+    <!-- 스크롤 유도 인디케이터 -->
+    <div class="mt-14 flex flex-col items-center gap-2 font-mono-tech text-[10px] tracking-[0.3em] text-zinc-500">
+      <span>SCROLL DOWN — HEART RATE WILL ESCALATE</span>
+      <div class="w-px h-12 bg-gradient-to-b from-red-600 to-transparent animate-pulse"></div>
+    </div>
+  </section>
+
+  <!-- SECTION 2: REDACTED NARRATIVE (스크롤 기밀 검열 해제) -->
+  <section id="sec-dossier" class="relative min-h-screen flex flex-col justify-center items-center px-6 py-28 z-10 border-t border-white/5">
+    <div class="max-w-4xl w-full">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-12 pb-4 border-b border-zinc-800">
+        <div>
+          <span class="font-mono-tech text-xs tracking-[0.3em] text-red-500 block">CLASSIFIED DOSSIER // CASE #409</span>
+          <h2 class="font-cinzel text-2xl sm:text-4xl font-bold text-white tracking-wider mt-1">THE RULES OF DECEPTION</h2>
+        </div>
+        <button id="btnDecryptAll" class="interactive-el self-start sm:self-auto font-mono-tech text-xs px-4 py-2 bg-zinc-900 hover:bg-red-950 border border-zinc-700 hover:border-red-500 text-zinc-300 transition">
+          [ 기밀 문건 강제 해독 (DECRYPT ALL) ]
+        </button>
+      </div>
+
+      <div class="space-y-12 text-lg sm:text-3xl font-bold leading-snug text-zinc-500">
+        <p class="narrative-item transition-all duration-700">
+          01. 테이블 위에는 단 <span class="redacted-bar interactive-el">5장의 카드</span>와 총알이 장전된 리볼버, 그리고 서로를 속여야 하는 <span class="redacted-bar interactive-el">4명의 인간</span>만이 존재합니다.
+        </p>
+        <p class="narrative-item transition-all duration-700">
+          02. 운에 기대는 자는 가장 먼저 죽습니다. 상대가 패를 내려놓는 순간의 <span class="redacted-bar interactive-el">미세한 동공 확장</span>과 <span class="redacted-bar interactive-el">목울대의 떨림</span>을 포착하십시오.
+        </p>
+        <p class="narrative-item transition-all duration-700">
+          03. 때로는 진실을 말하면서도 <span class="redacted-bar interactive-el">거짓말쟁이처럼 연기</span>하여 상대가 섣불리 방아쇠를 당기도록 <span class="redacted-bar interactive-el">역심리 함정</span>을 설계해야 합니다.
+        </p>
+        <p class="narrative-item transition-all duration-700">
+          04. 지금 당신의 맞은편에서 미소 짓고 있는 사람의 맥박은 <span class="redacted-bar interactive-el">178 BPM</span>입니다. 당신은 그 미소를 <span class="redacted-bar interactive-el">믿으시겠습니까?</span>
+        </p>
+      </div>
+
+      <!-- 기존 게임 vs SILENT TRIGGER 차별화 비교 박스 -->
+      <div class="mt-16 grid grid-cols-1 md:grid-cols-3 gap-4 bg-zinc-950/90 border border-zinc-800 p-6">
+        <div class="border-l-2 border-red-600 pl-4">
+          <div class="font-mono-tech text-xs text-red-500 tracking-widest mb-1">REAL HUMAN AVATARS</div>
+          <h3 class="text-white font-bold text-base mb-1">동물 가면을 벗어던진 극사실주의</h3>
+          <p class="text-zinc-400 text-xs leading-relaxed">유니티 HDRP 피부 셰이더와 52개 안면 블렌드셰이프로 구현된 식은땀, 입꼬리 경련, 시선 회피를 직접 관찰합니다.</p>
+        </div>
+        <div class="border-l-2 border-amber-500 pl-4">
+          <div class="font-mono-tech text-xs text-amber-500 tracking-widest mb-1">VOICE & BREATH BIOMETRICS</div>
+          <h3 class="text-white font-bold text-base mb-1">실시간 음성 떨림 & 심박 사운드</h3>
+          <p class="text-zinc-400 text-xs leading-relaxed">마이크 보이스 채팅 분석 및 캐릭터 심박 사운드를 통해 상대의 허세와 진짜 공포를 청각적으로 구분합니다.</p>
+        </div>
+        <div class="border-l-2 border-red-600 pl-4">
+          <div class="font-mono-tech text-xs text-red-500 tracking-widest mb-1">LIAR GAME STRATEGY</div>
+          <h3 class="text-white font-bold text-base mb-1">심리 유도와 협잡의 서바이벌</h3>
+          <p class="text-zinc-400 text-xs leading-relaxed">단순 찍기가 아닌 일부러 가짜 버릇(Tell)을 노출해 상대의 블러핑 콜을 유도하는 고차원 심리전이 펼쳐집니다.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 3: SUSPECT MICRO-EXPRESSION SCANNER (용의자 심리 분석 인터랙션) -->
+  <section id="sec-scanner" class="relative min-h-screen flex flex-col justify-center items-center px-6 py-28 z-10 border-t border-white/5">
+    <div class="max-w-6xl w-full">
+      <div class="text-center mb-12">
+        <span class="font-mono-tech text-xs tracking-[0.35em] text-red-500 uppercase">UNITY FACIAL SHADER & TELEMETRY</span>
+        <h2 class="font-cinzel text-3xl sm:text-5xl font-black text-white tracking-wider mt-2">
+          SUSPECT MICRO-EXPRESSION SCANNER
+        </h2>
+        <p class="text-zinc-400 text-sm sm:text-base mt-3 max-w-2xl mx-auto">
+          각 용의자 카드를 클릭하여 <span class="text-red-400 font-semibold">[심리 정밀 스캔]</span>을 실행해 보십시오. 인게임에서 플레이어가 직접 읽어야 하는 생체 신호와 거짓말 버릇(Tell)이 분석됩니다.
+        </p>
+      </div>
+
+      <!-- 3명의 용의자 카드 그리드 -->
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-10">
+        <!-- 용의자 #01 -->
+        <div class="suspect-card interactive-el group relative bg-gradient-to-b from-zinc-900/90 to-[#07070a] border border-red-500/70 p-6 transition-all duration-300 scanning" data-suspect="0" onclick="selectSuspect(0)">
+          <div class="scan-laser"></div>
+          <div class="flex justify-between items-center font-mono-tech text-xs mb-4">
+            <span class="text-red-500 font-bold">SUBJECT #01 // ACTIVE SCAN</span>
+            <span class="px-2 py-0.5 bg-red-950/80 text-red-300 border border-red-800 text-[10px]">위험도: 극상</span>
+          </div>
+
+          <!-- 용의자 실루엣/안면 벡터 포트레이트 -->
+          <div class="h-44 bg-black/80 border border-zinc-800 mb-5 flex items-center justify-center relative overflow-hidden">
+            <svg viewBox="0 0 200 160" class="w-40 h-40">
+              <circle cx="100" cy="70" r="42" fill="#141418" stroke="#444" stroke-width="1.5"/>
+              <path d="M 45 155 Q 100 115 155 155" fill="#101014" stroke="#555" stroke-width="1.5"/>
+              <!-- 날카로운 안경과 냉철한 눈 -->
+              <rect x="70" y="58" width="24" height="12" fill="none" stroke="#c5a059" stroke-width="1.5"/>
+              <rect x="106" y="58" width="24" height="12" fill="none" stroke="#c5a059" stroke-width="1.5"/>
+              <line x1="94" y1="64" x2="106" y2="64" stroke="#c5a059" stroke-width="1.5"/>
+              <circle cx="82" cy="64" r="3" fill="#ff1e1e"/>
+              <circle cx="118" cy="64" r="3" fill="#ff1e1e"/>
+              <!-- 무표정한 입매 -->
+              <line x1="88" y1="92" x2="112" y2="91" stroke="#777" stroke-width="2"/>
+            </svg>
+            <div class="absolute bottom-2 left-2 font-mono-tech text-[10px] text-red-400 bg-black/80 px-2 py-0.5">
+              BPM: 68 (비정상적 평온)
+            </div>
+          </div>
+
+          <h3 class="text-xl font-bold text-white mb-1">강태하 (Kang Tae-Ha)</h3>
+          <p class="text-amber-500/90 font-mono-tech text-xs mb-3">전직 기업 위기 협상가 — "냉혈한 포커페이스"</p>
+          <p class="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-4">
+            절대 목소리를 높이지 않으며 심박수조차 거의 변하지 않습니다. 하지만 결정적인 거짓말 직전, <span class="text-white">오른쪽 검지로 테이블을 한 번 두드리는 무의식적 통제 벽</span>이 있습니다.
+          </p>
+          <div class="font-mono-tech text-[11px] text-red-400 border-t border-zinc-800 pt-3 flex justify-between">
+            <span>[ 미세표정 스캔 데이터 보기 ]</span>
+            <span>→</span>
+          </div>
+        </div>
+
+        <!-- 용의자 #02 -->
+        <div class="suspect-card interactive-el group relative bg-gradient-to-b from-zinc-900/60 to-[#07070a] border border-zinc-800 hover:border-red-500/60 p-6 transition-all duration-300" data-suspect="1" onclick="selectSuspect(1)">
+          <div class="scan-laser"></div>
+          <div class="flex justify-between items-center font-mono-tech text-xs mb-4">
+            <span class="text-zinc-400 group-hover:text-red-400 font-bold">SUBJECT #02 // STANDBY</span>
+            <span class="px-2 py-0.5 bg-amber-950/80 text-amber-300 border border-amber-800 text-[10px]">교란형 협잡꾼</span>
+          </div>
+
+          <div class="h-44 bg-black/80 border border-zinc-800 mb-5 flex items-center justify-center relative overflow-hidden">
+            <svg viewBox="0 0 200 160" class="w-40 h-40">
+              <circle cx="100" cy="70" r="40" fill="#161316" stroke="#554" stroke-width="1.5"/>
+              <path d="M 48 155 Q 100 118 152 155" fill="#151014" stroke="#644" stroke-width="1.5"/>
+              <!-- 반달 모양의 웃는 눈과 비대칭 미소 -->
+              <path d="M 72 64 Q 82 56 92 64" fill="none" stroke="#e5e5e5" stroke-width="2"/>
+              <path d="M 108 64 Q 118 56 128 64" fill="none" stroke="#e5e5e5" stroke-width="2"/>
+              <circle cx="82" cy="63" r="2.8" fill="#ff1e1e"/>
+              <circle cx="118" cy="63" r="2.8" fill="#ff1e1e"/>
+              <!-- 비대칭 냉소 -->
+              <path d="M 86 90 Q 100 96 116 85" fill="none" stroke="#ff1e1e" stroke-width="2"/>
+            </svg>
+            <div class="absolute bottom-2 left-2 font-mono-tech text-[10px] text-amber-400 bg-black/80 px-2 py-0.5">
+              BPM: 114 (의도적 흥분 유도)
+            </div>
+          </div>
+
+          <h3 class="text-xl font-bold text-white mb-1">윤서연 (Yoon Seo-Yeon)</h3>
+          <p class="text-amber-500/90 font-mono-tech text-xs mb-3">언더그라운드 하우스 설계자 — "미소 짓는 협잡꾼"</p>
+          <p class="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-4">
+            일부러 불안한 척 손을 떨거나 눈을 깜빡여 상대가 [거짓말 지목]을 누르도록 유도합니다. 진짜 블러핑을 할 때는 오히려 <span class="text-white">완벽한 좌우 대칭 미소</span>를 짓습니다.
+          </p>
+          <div class="font-mono-tech text-[11px] text-zinc-400 group-hover:text-red-400 border-t border-zinc-800 pt-3 flex justify-between">
+            <span>[ 미세표정 스캔 데이터 보기 ]</span>
+            <span>→</span>
+          </div>
+        </div>
+
+        <!-- 용의자 #03 -->
+        <div class="suspect-card interactive-el group relative bg-gradient-to-b from-zinc-900/60 to-[#07070a] border border-zinc-800 hover:border-red-500/60 p-6 transition-all duration-300" data-suspect="2" onclick="selectSuspect(2)">
+          <div class="scan-laser"></div>
+          <div class="flex justify-between items-center font-mono-tech text-xs mb-4">
+            <span class="text-zinc-400 group-hover:text-red-400 font-bold">SUBJECT #03 // STANDBY</span>
+            <span class="px-2 py-0.5 bg-red-950/80 text-red-400 border border-red-800 text-[10px]">패닉 & 폭주</span>
+          </div>
+
+          <div class="h-44 bg-black/80 border border-zinc-800 mb-5 flex items-center justify-center relative overflow-hidden">
+            <svg viewBox="0 0 200 160" class="w-40 h-40">
+              <circle cx="100" cy="70" r="41" fill="#141418" stroke="#533" stroke-width="1.5"/>
+              <path d="M 45 155 Q 100 115 155 155" fill="#121012" stroke="#533" stroke-width="1.5"/>
+              <!-- 크게 흔들리는 눈과 식은땀 -->
+              <circle cx="82" cy="64" r="9" fill="#ddd"/>
+              <circle cx="118" cy="64" r="9" fill="#ddd"/>
+              <circle cx="84" cy="64" r="4" fill="#b80f0a"/>
+              <circle cx="116" cy="64" r="4" fill="#b80f0a"/>
+              <!-- 일그러진 입 -->
+              <path d="M 86 94 Q 100 86 114 94" fill="none" stroke="#aaa" stroke-width="2"/>
+              <!-- 식은땀 방울 -->
+              <path d="M 134 48 Q 137 55 134 58 Q 131 55 134 48 Z" fill="#60a5fa"/>
+            </svg>
+            <div class="absolute bottom-2 left-2 font-mono-tech text-[10px] text-red-500 bg-black/80 px-2 py-0.5">
+              BPM: 168 (극도의 교감신경 항진)
+            </div>
+          </div>
+
+          <h3 class="text-xl font-bold text-white mb-1">박진우 (Park Jin-Woo)</h3>
+          <p class="text-amber-500/90 font-mono-tech text-xs mb-3">벼랑 끝의 채무자 — "코너에 몰린 배신자"</p>
+          <p class="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-4">
+            공포에 질려 호흡이 가쁘고 식은땀을 흘리지만, 생존 본능이 극에 달하면 가장 대담하게 조커를 섞어 넣습니다. <span class="text-white">마른침을 삼키는 오디오 큐</span>가 핵심 단서입니다.
+          </p>
+          <div class="font-mono-tech text-[11px] text-zinc-400 group-hover:text-red-400 border-t border-zinc-800 pt-3 flex justify-between">
+            <span>[ 미세표정 스캔 데이터 보기 ]</span>
+            <span>→</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 선택된 용의자 정밀 텔레메트리 분석 창 -->
+      <div class="bg-[#09090d] border border-red-900/50 p-6 sm:p-8 shadow-[0_0_50px_rgba(0,0,0,0.9)]">
+        <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 border-b border-zinc-800 pb-4 mb-6">
+          <div>
+            <span id="scanPanelCode" class="font-mono-tech text-xs text-red-500 tracking-widest">BIOMETRIC TELEMETRY // SUBJECT #01</span>
+            <h4 id="scanPanelName" class="text-xl sm:text-2xl font-bold text-white mt-1">강태하 — 실시간 인게임 셰이더 & 오디오 단서 분석</h4>
+          </div>
+          <div class="font-mono-tech text-xs px-3 py-1.5 bg-red-950/60 border border-red-700/60 text-red-300">
+            진실 확률 추정치: <span id="scanTruthProb" class="font-bold text-white">31.4%</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-4 font-mono-tech text-xs mb-6">
+          <div class="bg-zinc-950 border border-zinc-800 p-4">
+            <div class="text-zinc-500 mb-1">EYE BLINK RATE (분당 깜빡임)</div>
+            <div id="scanBlink" class="text-base font-bold text-amber-400">6회 / min (비정상적 응시)</div>
+          </div>
+          <div class="bg-zinc-950 border border-zinc-800 p-4">
+            <div class="text-zinc-500 mb-1">FACIAL MICRO-TREMOR (안면 떨림)</div>
+            <div id="scanTremor" class="text-base font-bold text-red-400">우측 입꼬리 0.15초 수축</div>
+          </div>
+          <div class="bg-zinc-950 border border-zinc-800 p-4">
+            <div class="text-zinc-500 mb-1">3D AUDIO CUE (청각 단서)</div>
+            <div id="scanAudioCue" class="text-base font-bold text-zinc-200">검지 손가락 테이블 탭 사운드</div>
+          </div>
+          <div class="bg-zinc-950 border border-zinc-800 p-4">
+            <div class="text-zinc-500 mb-1">COUNTER-STRATEGY (파훼법)</div>
+            <div id="scanCounter" class="text-base font-bold text-emerald-400">침묵이 길어질 때 즉시 콜</div>
+          </div>
+        </div>
+
+        <p id="scanDeepNote" class="text-zinc-300 text-sm leading-relaxed bg-red-950/20 border-l-2 border-red-600 pl-4 py-2">
+          [유니티 인게임 연출 포인트] 강태하는 패를 낼 때 카메라를 똑바로 응시하여 플레이어를 위축시킵니다. 그러나 카드가 손을 떠나는 직전 프레임에 손가락 끝이 미세하게 경직되는 모션 캡처 데이터를 통해 블러핑을 간파할 수 있습니다.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- SECTION 4: PLAYABLE CLIMAX (실전 1턴 심리전 블러핑 테이블) -->
+  <section id="sec-climax" class="relative min-h-screen flex flex-col justify-center items-center px-4 sm:px-6 py-28 z-10 border-t border-red-900/30 bg-[radial-gradient(circle_at_center,rgba(110,10,10,0.22)_0%,transparent_75%)]">
+    <div class="max-w-4xl w-full">
+      <div class="text-center mb-8">
+        <span class="font-mono-tech text-xs tracking-[0.35em] text-red-500 uppercase">PLAYABLE INTERROGATION DEMO</span>
+        <h2 class="font-cinzel text-3xl sm:text-5xl font-black text-white tracking-wider mt-1">
+          FINAL ROUND : YOUR TURN
+        </h2>
+        <p class="text-zinc-400 text-xs sm:text-sm mt-2">
+          상대의 생체 단서를 관찰한 뒤, <span class="text-red-400 font-semibold">진짜 KING 3장(진실)</span>인지 <span class="text-amber-400 font-semibold">조커가 섞인 블러핑(거짓)</span>인지 판정하십시오.
+        </p>
+      </div>
+
+      <!-- 취조실 게임 테이블 박스 -->
+      <div id="gameTableContainer" class="bg-[#08080c]/95 border border-red-800/60 p-6 sm:p-10 shadow-[0_0_90px_rgba(0,0,0,0.95)] relative">
+        <!-- 상단 상태 바 -->
+        <div class="flex flex-wrap items-center justify-between gap-2 pb-4 mb-6 border-b border-zinc-800 font-mono-tech text-xs">
+          <div class="flex items-center gap-3">
+            <span class="px-2.5 py-1 bg-red-900/40 border border-red-600 text-red-300 font-bold" id="demoRoundBadge">SCENARIO #1</span>
+            <span class="text-zinc-400">TABLE DECLARATION: <strong class="text-amber-400">KING (K) TABLE</strong></span>
+          </div>
+          <div class="text-zinc-400">
+            누적 간파 성공: <span id="scoreWins" class="text-emerald-400 font-bold">0</span>승 / <span id="scoreTotal" class="text-zinc-200 font-bold">0</span>전
+          </div>
+        </div>
+
+        <!-- 상대방 대사 & 실시간 상태 -->
+        <div class="text-center mb-8">
+          <div id="opponentSpeakerTag" class="font-mono-tech text-xs text-amber-500 tracking-widest mb-2">
+            [ 맞은편 상대: 윤서연 (미소 짓는 협잡꾼) ]
+          </div>
+          <blockquote id="opponentSpeech" class="text-lg sm:text-2xl font-bold text-white leading-relaxed max-w-2xl mx-auto">
+            "이번에 내가 내려놓은 카드 3장… 전부 <span class="text-red-500 underline decoration-red-700">KING</span>이야.<br>
+            의심스러우면 지금 바로 방아쇠를 걸고 나를 지목해 봐."
+          </blockquote>
+        </div>
+
+        <!-- 3D 카드 3장 테이블 영역 -->
+        <div class="perspective-table flex justify-center items-center gap-3 sm:gap-8 my-8 py-4">
+          <!-- Card 1 -->
+          <div class="playing-card interactive-el" id="tableCard0" onclick="inspectSingleCard(0)">
+            <div class="card-face card-back flex flex-col items-center justify-between p-3">
+              <span class="font-mono-tech text-[9px] text-amber-500/60">SILENT TRIGGER</span>
+              <div class="w-12 h-12 rounded-full border border-red-800/60 flex items-center justify-center">
+                <span class="font-cinzel text-red-600 text-xl font-black">?</span>
+              </div>
+              <span class="font-mono-tech text-[9px] text-zinc-600">CARD #01</span>
+            </div>
+            <div class="card-face card-front flex flex-col items-center justify-between p-3" id="cardFront0">
+              <div class="self-start font-cinzel text-lg font-black text-amber-400" id="cardCorner0">K♠</div>
+              <div class="font-cinzel text-3xl sm:text-4xl font-black text-white" id="cardCenter0">KING</div>
+              <div class="self-end font-mono-tech text-[10px] text-zinc-400" id="cardSub0">TRUTH</div>
+            </div>
+          </div>
+
+          <!-- Card 2 -->
+          <div class="playing-card interactive-el" id="tableCard1" onclick="inspectSingleCard(1)">
+            <div class="card-face card-back flex flex-col items-center justify-between p-3">
+              <span class="font-mono-tech text-[9px] text-amber-500/60">SILENT TRIGGER</span>
+              <div class="w-12 h-12 rounded-full border border-red-800/60 flex items-center justify-center">
+                <span class="font-cinzel text-red-600 text-xl font-black">?</span>
+              </div>
+              <span class="font-mono-tech text-[9px] text-zinc-600">CARD #02</span>
+            </div>
+            <div class="card-face card-front flex flex-col items-center justify-between p-3" id="cardFront1">
+              <div class="self-start font-cinzel text-lg font-black text-red-500" id="cardCorner1">JOKER</div>
+              <div class="font-cinzel text-2xl sm:text-3xl font-black text-red-500" id="cardCenter1">LIAR</div>
+              <div class="self-end font-mono-tech text-[10px] text-red-400" id="cardSub1">BLUFF</div>
+            </div>
+          </div>
+
+          <!-- Card 3 -->
+          <div class="playing-card interactive-el" id="tableCard2" onclick="inspectSingleCard(2)">
+            <div class="card-face card-back flex flex-col items-center justify-between p-3">
+              <span class="font-mono-tech text-[9px] text-amber-500/60">SILENT TRIGGER</span>
+              <div class="w-12 h-12 rounded-full border border-red-800/60 flex items-center justify-center">
+                <span class="font-cinzel text-red-600 text-xl font-black">?</span>
+              </div>
+              <span class="font-mono-tech text-[9px] text-zinc-600">CARD #03</span>
+            </div>
+            <div class="card-face card-front flex flex-col items-center justify-between p-3" id="cardFront2">
+              <div class="self-start font-cinzel text-lg font-black text-amber-400" id="cardCorner2">Q♥</div>
+              <div class="font-cinzel text-2xl sm:text-3xl font-black text-red-400" id="cardCenter2">QUEEN</div>
+              <div class="self-end font-mono-tech text-[10px] text-red-400" id="cardSub2">BLUFF</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 생체 단서 관찰 로그 창 -->
+        <div class="bg-zinc-950/90 border border-zinc-800 p-4 mb-6">
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-2 mb-2">
+            <span class="font-mono-tech text-xs text-amber-400 tracking-wider">
+              [ 생체 단서 분석 로그 (BIOMETRIC TELL LOG) ]
+            </span>
+            <button id="btnObserveClue" onclick="observeOpponentTell()" class="interactive-el font-mono-tech text-xs px-3 py-1.5 bg-amber-950/50 hover:bg-amber-900/70 border border-amber-500/60 text-amber-200 transition">
+              🔍 상대 표정/맥박 정밀 관찰하기 (남은 횟수: <span id="clueCountLeft">2</span>)
+            </button>
+          </div>
+          <ul id="clueLogList" class="font-mono-tech text-xs sm:text-sm text-zinc-300 space-y-1.5 list-disc list-inside">
+            <li id="initialClueText">기본 관찰: 상대가 카드를 밀어 넣으며 당신의 눈을 3초간 정면으로 응시했습니다.</li>
+          </ul>
+        </div>
+
+        <!-- 결단 버튼 2개 -->
+        <div id="actionButtonsGroup" class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <button onclick="executeJudgment('CALL_LIAR')" class="interactive-el py-4 px-6 bg-red-900/80 hover:bg-red-600 text-white font-cinzel font-bold text-sm sm:text-base tracking-[0.2em] border border-red-400 shadow-[0_0_30px_rgba(184,15,10,0.4)] transition-all">
+            거짓말을 지목한다 (CALL LIAR)
+          </button>
+          <button onclick="executeJudgment('PASS_TURN')" class="interactive-el py-4 px-6 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 font-cinzel font-bold text-sm sm:text-base tracking-[0.2em] border border-zinc-600 transition-all">
+            믿고 턴을 넘긴다 (PASS TURN)
+          </button>
+        </div>
+
+        <!-- 판정 결과 & 스팀 위시리스트/사전예약 영역 (판정 후 활성화) -->
+        <div id="judgmentResultPanel" class="hidden mt-8 pt-6 border-t border-red-900/50 text-center">
+          <div id="judgmentBadge" class="inline-block font-mono-tech text-xs px-3 py-1 mb-2 border"></div>
+          <h3 id="judgmentHeadline" class="text-xl sm:text-3xl font-black text-white mb-3"></h3>
+          <p id="judgmentExplanation" class="text-zinc-300 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed mb-6"></p>
+
+          <div class="flex flex-wrap items-center justify-center gap-4">
+            <button onclick="setupNewBluffRound()" class="interactive-el px-6 py-3.5 bg-zinc-800 hover:bg-zinc-700 text-white font-mono-tech text-xs tracking-[0.2em] border border-zinc-500 transition">
+              [ ↻ 다른 심리전 패턴 다시 플레이 ]
+            </button>
+            <button onclick="openWishlistModal()" class="interactive-el px-8 py-3.5 bg-white hover:bg-red-600 text-black hover:text-white font-cinzel font-black text-xs sm:text-sm tracking-[0.25em] transition shadow-[0_0_35px_rgba(255,255,255,0.3)]">
+              WISHLIST ON STEAM & 사전예약
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 스팀 위시리스트 & 클로즈 베타 사전예약 모달 (No alert() used) -->
+  <div id="wishlistModal" class="fixed inset-0 z-[9995] bg-black/85 backdrop-blur-md hidden items-center justify-center px-4">
+    <div class="max-w-lg w-full bg-[#09090d] border border-red-600 p-8 relative shadow-[0_0_70px_rgba(220,38,38,0.35)]">
+      <button onclick="closeWishlistModal()" class="interactive-el absolute top-4 right-4 font-mono-tech text-zinc-400 hover:text-white text-sm px-2 py-1">
+        [ ESC / X ]
+      </button>
+      <div class="font-mono-tech text-xs text-red-500 tracking-[0.3em] mb-2">CLOSED BETA INVITATION</div>
+      <h3 class="font-cinzel text-2xl sm:text-3xl font-black text-white mb-2">JOIN THE INTERROGATION</h3>
+      <p class="text-zinc-400 text-xs sm:text-sm leading-relaxed mb-6">
+        유니티 엔진으로 개발 중인 하이퍼 리얼리즘 심리 서바이벌 <strong class="text-white">《SILENT TRIGGER : 침묵의 방아쇠》</strong> 스팀 출시 알림 및 비공개 테스트 초대장을 받아보십시오.
+      </p>
+
+      <form id="preRegForm" onsubmit="submitPreRegistration(event)" class="space-y-4">
+        <div>
+          <label class="block font-mono-tech text-[11px] text-zinc-400 mb-1">PLAYER EMAIL (초대장 수신 이메일)</label>
+          <input type="email" id="preRegEmail" required placeholder="survivor@table04.com" class="interactive-el w-full bg-zinc-950 border border-zinc-700 focus:border-red-500 px-4 py-3 text-sm text-white font-mono-tech outline-none">
+        </div>
+        <div>
+          <label class="block font-mono-tech text-[11px] text-zinc-400 mb-1">PREFERRED PLAYSTYLE (선호하는 심리전 스타일)</label>
+          <select id="preRegStyle" class="interactive-el w-full bg-zinc-950 border border-zinc-700 px-4 py-3 text-sm text-zinc-200 font-mono-tech outline-none">
+            <option value="pokerface">포커페이스 & 냉철한 확률 계산형</option>
+            <option value="manipulator">가짜 단서 흘리기 & 역심리 유도형</option>
+            <option value="observer">미세 표정/심박 사운드 정밀 관찰형</option>
+          </select>
+        </div>
+        <button type="submit" class="interactive-el w-full py-4 bg-red-700 hover:bg-red-600 text-white font-mono-tech text-xs sm:text-sm font-bold tracking-[0.25em] transition">
+          [ 사전예약 및 스팀 알림 등록 완료하기 ]
+        </button>
+      </form>
+
+      <div id="preRegSuccessMsg" class="hidden mt-4 p-4 bg-emerald-950/50 border border-emerald-500 text-emerald-200 font-mono-tech text-xs leading-relaxed">
+        ✓ [초대장 등록 완료] 당신의 생체 데이터가 4번 테이블 명단에 기록되었습니다. 클로즈 베타 오픈 즉시 암호화 메일이 발송됩니다.
+      </div>
+    </div>
+  </div>
+
+  <!-- 푸터 -->
+  <footer class="relative z-10 border-t border-zinc-900 py-12 px-6 text-center font-mono-tech text-xs text-zinc-600">
+    <div class="max-w-4xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div>SILENT TRIGGER © 2026 STUDIO DECEPTION. POWERED BY UNITY ENGINE.</div>
+      <div class="flex gap-4">
+        <button onclick="openWishlistModal()" class="interactive-el text-red-500 hover:underline">STEAM WISHLIST</button>
+        <span>|</span>
+        <a href="#sec-hero" class="interactive-el hover:text-zinc-300">BACK TO TOP ↑</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    /*************************************************************************
+     * 1. WEB AUDIO API PROCEDURAL SOUND SYNTHESIZER (외부 음원 파일 불필요)
+     *************************************************************************/
+    let audioCtx = null;
+    let isSoundEnabled = false;
+    let currentBpm = 72;
+    let heartbeatTimer = null;
+    let ambientGain = null;
+
+    function initAudioEngine() {
+      if (!audioCtx) {
+        const AudioContextClass = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AudioContextClass();
+      }
+      if (audioCtx.state === 'suspended') {
+        audioCtx.resume();
+      }
+      isSoundEnabled = true;
+      updateSoundToggleUI();
+      startAmbientRoomDrone();
+      scheduleNextHeartbeat();
+    }
+
+    function toggleSound() {
+      if (!audioCtx) {
+        initAudioEngine();
+        return;
+      }
+      isSoundEnabled = !isSoundEnabled;
+      if (ambientGain && audioCtx) {
+        ambientGain.gain.setTargetAtTime(isSoundEnabled ? 0.035 : 0, audioCtx.currentTime, 0.2);
+      }
+      if (isSoundEnabled) {
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+        scheduleNextHeartbeat();
+      } else if (heartbeatTimer) {
+        clearTimeout(heartbeatTimer);
+      }
+      updateSoundToggleUI();
+    }
+
+    function updateSoundToggleUI() {
+      const btn = document.getElementById('btnSoundToggle');
+      if (isSoundEnabled) {
+        btn.textContent = 'SOUND: ON 🔊';
+        btn.classList.add('border-red-500', 'text-red-400');
+      } else {
+        btn.textContent = 'SOUND: OFF 🔇';
+        btn.classList.remove('border-red-500', 'text-red-400');
+      }
+    }
+
+    // 어두운 취조실 앰비언트 드론 사운드
+    function startAmbientRoomDrone() {
+      if (!audioCtx || ambientGain) return;
+      const osc1 = audioCtx.createOscillator();
+      const osc2 = audioCtx.createOscillator();
+      const filter = audioCtx.createBiquadFilter();
+      ambientGain = audioCtx.createGain();
+
+      osc1.type = 'sawtooth';
+      osc2.type = 'sine';
+      osc1.frequency.value = 41.2; // 깊은 저음 E1
+      osc2.frequency.value = 41.8; // 미세한 디튠으로 불안감 조성
+
+      filter.type = 'lowpass';
+      filter.frequency.value = 115;
+
+      ambientGain.gain.value = isSoundEnabled ? 0.035 : 0;
+
+      osc1.connect(filter);
+      osc2.connect(filter);
+      filter.connect(ambientGain);
+      ambientGain.connect(audioCtx.destination);
+
+      osc1.start();
+      osc2.start();
+    }
+
+    // 실제 심장 박동(Lub-Dub) 저음 펄스 합성 + ECG 캔버스 스파이크 동기화
+    function playHeartbeatLubDub() {
+      triggerECGSpike(); // 시각적 파형은 사운드 여부와 무관하게 항상 작동
+
+      if (!isSoundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const intensity = Math.min(1, (currentBpm - 65) / 120); // BPM이 높을수록 소리도 강해짐
+
+      // 첫 번째 박동 (Lub)
+      const osc1 = audioCtx.createOscillator();
+      const gain1 = audioCtx.createGain();
+      osc1.type = 'sine';
+      osc1.frequency.setValueAtTime(62, now);
+      osc1.frequency.exponentialRampToValueAtTime(28, now + 0.11);
+
+      gain1.gain.setValueAtTime(0.001, now);
+      gain1.gain.linearRampToValueAtTime(0.18 + intensity * 0.22, now + 0.02);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.14);
+
+      osc1.connect(gain1);
+      gain1.connect(audioCtx.destination);
+      osc1.start(now);
+      osc1.stop(now + 0.15);
+
+      // 두 번째 박동 (Dub)
+      const dubDelay = 0.16;
+      const osc2 = audioCtx.createOscillator();
+      const gain2 = audioCtx.createGain();
+      osc2.type = 'triangle';
+      osc2.frequency.setValueAtTime(52, now + dubDelay);
+      osc2.frequency.exponentialRampToValueAtTime(24, now + dubDelay + 0.12);
+
+      gain2.gain.setValueAtTime(0.001, now + dubDelay);
+      gain2.gain.linearRampToValueAtTime(0.12 + intensity * 0.16, now + dubDelay + 0.02);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + dubDelay + 0.15);
+
+      osc2.connect(gain2);
+      gain2.connect(audioCtx.destination);
+      osc2.start(now + dubDelay);
+      osc2.stop(now + dubDelay + 0.16);
+    }
+
+    function scheduleNextHeartbeat() {
+      if (heartbeatTimer) clearTimeout(heartbeatTimer);
+      playHeartbeatLubDub();
+      const intervalMs = Math.max(310, Math.floor(60000 / currentBpm));
+      heartbeatTimer = setTimeout(scheduleNextHeartbeat, intervalMs);
+    }
+
+    // UI 호버/클릭 및 스캔 효과음
+    function playUISound(type = 'hover') {
+      if (!isSoundEnabled || !audioCtx) return;
+      const now = audioCtx.currentTime;
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+
+      if (type === 'hover') {
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(980, now);
+        osc.frequency.exponentialRampToValueAtTime(420, now + 0.03);
+        gain.gain.setValueAtTime(0.03, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.035);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.04);
+      } else if (type === 'scan') {
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(320, now);
+        osc.frequency.linearRampToValueAtTime(880, now + 0.18);
+        gain.gain.setValueAtTime(0.05, now);
+        gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start(now);
+        osc.stop(now + 0.23);
+      } else if (type === 'climax') {
+        // 격발 충격음 + 고주파 이명(Tinnitus) 사운드
+        const impactOsc = audioCtx.createOscillator();
+        const impactGain = audioCtx.createGain();
+        impactOsc.type = 'sawtooth';
+        impactOsc.frequency.setValueAtTime(130, now);
+        impactOsc.frequency.exponentialRampToValueAtTime(18, now + 0.45);
+        impactGain.gain.setValueAtTime(0.45, now);
+        impactGain.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
+        impactOsc.connect(impactGain);
+        impactGain.connect(audioCtx.destination);
+        impactOsc.start(now);
+        impactOsc.stop(now + 0.52);
+
+        // 이명 효과 (삐— 소리)
+        const ringOsc = audioCtx.createOscillator();
+        const ringGain = audioCtx.createGain();
+        ringOsc.type = 'sine';
+        ringOsc.frequency.setValueAtTime(3750, now + 0.05);
+        ringGain.gain.setValueAtTime(0.001, now);
+        ringGain.gain.linearRampToValueAtTime(0.07, now + 0.08);
+        ringGain.gain.exponentialRampToValueAtTime(0.0005, now + 1.8);
+        ringOsc.connect(ringGain);
+        ringGain.connect(audioCtx.destination);
+        ringOsc.start(now);
+        ringOsc.stop(now + 1.85);
+      }
+    }
+
+    /*************************************************************************
+     * 2. REAL-TIME ECG POLYGRAPH WAVEFORM CANVAS
+     *************************************************************************/
+    const ecgCanvas = document.getElementById('ecgCanvas');
+    const ecgCtx = ecgCanvas ? ecgCanvas.getContext('2d') : null;
+    const ecgPoints = new Array(72).fill(18);
+    let ecgSpikeQueue = [];
+
+    function triggerECGSpike() {
+      // P-Q-R-S-T 심전도 파형 패턴 삽입
+      ecgSpikeQueue.push(18, 14, 22, 3, 33, 12, 18);
+    }
+
+    function renderECGLoop() {
+      if (ecgCtx) {
+        ecgPoints.shift();
+        if (ecgSpikeQueue.length > 0) {
+          ecgPoints.push(ecgSpikeQueue.shift());
+        } else {
+          const jitter = (Math.random() - 0.5) * (currentBpm > 130 ? 3.5 : 1.2);
+          ecgPoints.push(18 + jitter);
+        }
+
+        ecgCtx.fillStyle = 'rgba(9, 9, 12, 0.35)';
+        ecgCtx.fillRect(0, 0, ecgCanvas.width, ecgCanvas.height);
+
+        ecgCtx.beginPath();
+        ecgCtx.strokeStyle = currentBpm > 140 ? '#ff1e1e' : '#e11d48';
+        ecgCtx.lineWidth = 1.6;
+        for (let i = 0; i < ecgPoints.length; i++) {
+          const x = (i / (ecgPoints.length - 1)) * ecgCanvas.width;
+          const y = ecgPoints[i];
+          if (i === 0) ecgCtx.moveTo(x, y);
+          else ecgCtx.lineTo(x, y);
+        }
+        ecgCtx.stroke();
+      }
+      requestAnimationFrame(renderECGLoop);
+    }
+    requestAnimationFrame(renderECGLoop);
+
+    /*************************************************************************
+     * 3. CURSOR SPOTLIGHT, HUMAN EYE TRACKING & SCROLL TENSION SYSTEM
+     *************************************************************************/
+    const customCursor = document.getElementById('customCursor');
+    const leftEyeball = document.getElementById('leftEyeball');
+    const rightEyeball = document.getElementById('rightEyeball');
+    const pupilCircles = document.querySelectorAll('.pupil-circle');
+
+    function updatePointerCoordinates(clientX, clientY) {
+      document.documentElement.style.setProperty('--mouse-x', `${clientX}px`);
+      document.documentElement.style.setProperty('--mouse-y', `${clientY}px`);
+
+      if (customCursor) {
+        customCursor.style.left = `${clientX}px`;
+        customCursor.style.top = `${clientY}px`;
+      }
+
+      // 히어로 섹션 인간 안구 마우스 트래킹
+      if (leftEyeball && rightEyeball) {
+        const moveX = ((clientX / window.innerWidth) - 0.5) * 28;
+        const moveY = ((clientY / window.innerHeight) - 0.5) * 16;
+        leftEyeball.setAttribute('transform', `translate(${195 + moveX}, ${95 + moveY})`);
+        rightEyeball.setAttribute('transform', `translate(${505 + moveX}, ${95 + moveY})`);
+      }
+    }
+
+    window.addEventListener('mousemove', (e) => {
+      updatePointerCoordinates(e.clientX, e.clientY);
+    });
+
+    window.addEventListener('touchmove', (e) => {
+      if (e.touches && e.touches[0]) {
+        updatePointerCoordinates(e.touches[0].clientX, e.touches[0].clientY);
+      }
+    }, { passive: true });
+
+    // 인터랙티브 요소 호버 시 커서 확대 & 사운드
+    document.querySelectorAll('.interactive-el').forEach(el => {
+      el.addEventListener('mouseenter', () => {
+        if (customCursor) customCursor.classList.add('cursor-hover');
+        playUISound('hover');
+      });
+      el.addEventListener('mouseleave', () => {
+        if (customCursor) customCursor.classList.remove('cursor-hover');
+      });
+    });
+
+    // 스크롤 깊이에 따른 심박수(BPM), 동공 확장, 비네팅 압박감 업데이트
+    window.addEventListener('scroll', () => {
+      const scrollTop = window.scrollY;
+      const maxScroll = Math.max(1, document.documentElement.scrollHeight - window.innerHeight);
+      const ratio = Math.min(Math.max(scrollTop / maxScroll, 0), 1);
+
+      currentBpm = Math.floor(72 + ratio * 113); // 72 BPM -> 185 BPM
+      const pupilSize = (3.2 + ratio * 4.8).toFixed(1);
+      const stressPercent = Math.floor(18 + ratio * 81);
+
+      document.getElementById('hudBpmValue').textContent = `${currentBpm} BPM`;
+      document.getElementById('hudPupilValue').textContent = `${pupilSize} mm`;
+
+      // SVG 동공 반지름 실제 확장
+      const svgPupilRadius = 15 + ratio * 9;
+      pupilCircles.forEach(c => c.setAttribute('r', svgPupilRadius.toFixed(1)));
+
+      const stressEl = document.getElementById('hudStressState');
+      if (ratio < 0.3) {
+        stressEl.textContent = `STABLE (${stressPercent}%)`;
+        stressEl.className = 'text-zinc-300 font-semibold';
+        document.documentElement.style.setProperty('--pulse-duration', '0.95s');
+        document.documentElement.style.setProperty('--vignette-alpha', '0.18');
+      } else if (ratio < 0.7) {
+        stressEl.textContent = `ELEVATED // CAUTION (${stressPercent}%)`;
+        stressEl.className = 'text-amber-400 font-semibold';
+        document.documentElement.style.setProperty('--pulse-duration', '0.62s');
+        document.documentElement.style.setProperty('--vignette-alpha', '0.35');
+      } else {
+        stressEl.textContent = `CRITICAL // DECEPTION (${stressPercent}%)`;
+        stressEl.className = 'text-red-500 font-bold';
+        document.documentElement.style.setProperty('--pulse-duration', '0.35s');
+        document.documentElement.style.setProperty('--vignette-alpha', '0.58');
+      }
+    });
+
+    /*************************************************************************
+     * 4. REDACTED NARRATIVE SCROLL REVEAL & MANUAL CLICK DECRYPT
+     *************************************************************************/
+    const narrativeObserver = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('revealed', 'text-zinc-100');
+          entry.target.classList.remove('text-zinc-500');
+        }
+      });
+    }, { threshold: 0.45 });
+
+    document.querySelectorAll('.narrative-item').forEach(item => narrativeObserver.observe(item));
+
+    document.querySelectorAll('.redacted-bar').forEach(bar => {
+      bar.addEventListener('click', () => {
+        bar.classList.toggle('force-reveal');
+        playUISound('scan');
+      });
+    });
+
+    document.getElementById('btnDecryptAll').addEventListener('click', () => {
+      document.querySelectorAll('.narrative-item').forEach(item => {
+        item.classList.add('revealed', 'text-zinc-100');
+        item.classList.remove('text-zinc-500');
+      });
+      playUISound('scan');
+    });
+
+    /*************************************************************************
+     * 5. SUSPECT MICRO-EXPRESSION SCANNER DATA
+     *************************************************************************/
+    const suspectsData = [
+      {
+        code: 'BIOMETRIC TELEMETRY // SUBJECT #01',
+        name: '강태하 — 실시간 인게임 셰이더 & 오디오 단서 분석',
+        truthProb: '31.4%',
+        blink: '6회 / min (비정상적 응시)',
+        tremor: '우측 입꼬리 0.15초 미세 수축',
+        audioCue: '검지 손가락 테이블 탭 사운드',
+        counter: '침묵이 길어질 때 즉시 콜',
+        deepNote: '[유니티 인게임 연출 포인트] 강태하는 패를 낼 때 카메라를 똑바로 응시하여 플레이어를 위축시킵니다. 그러나 카드가 손을 떠나는 직전 프레임에 손가락 끝이 미세하게 경직되는 모션 캡처 데이터를 통해 블러핑을 간파할 수 있습니다.'
+      },
+      {
+        code: 'BIOMETRIC TELEMETRY // SUBJECT #02',
+        name: '윤서연 — 역심리 함정 및 비대칭 미소 블렌드셰이프 분석',
+        truthProb: '18.9%',
+        blink: '28회 / min (의도적 불안 연기)',
+        tremor: '좌우 대칭 미소 시 100% 거짓말',
+        audioCue: '낮은 콧소리와 여유로운 날숨',
+        counter: '불안해 보일 때는 절대 콜 금지',
+        deepNote: '[유니티 인게임 연출 포인트] 윤서연은 진짜 KING 3장을 들고 있을 때 오히려 손끝을 떨며 어설픈 거짓말쟁이처럼 연기합니다. 반대로 완벽하게 대칭된 미소 셰이더가 활성화되면 조커가 섞여 있다는 결정적 증거입니다.'
+      },
+      {
+        code: 'BIOMETRIC TELEMETRY // SUBJECT #03',
+        name: '박진우 — 극한 공포 상태의 동공 산동 & 3D 공간 오디오 분석',
+        truthProb: '46.2%',
+        blink: '42회 / min (패닉 상태)',
+        tremor: '턱관절 미세 경련 & 식은땀 셰이더',
+        audioCue: '패 제출 직전 마른침 삼키는 소리',
+        counter: '호흡이 순간 멈출 때 블러핑 지목',
+        deepNote: '[유니티 인게임 연출 포인트] 박진우는 게임 내내 불안해하지만, 진짜 거짓말을 던지는 순간에는 약 1.5초간 숨소리가 완전히 멎는 3D 바이노럴 오디오 침묵 구간이 발생합니다.'
+      }
+    ];
+
+    function selectSuspect(index) {
+      playUISound('scan');
+      const cards = document.querySelectorAll('.suspect-card');
+      cards.forEach((c, idx) => {
+        if (idx === index) {
+          c.classList.add('scanning', 'border-red-500/70');
+          c.classList.remove('border-zinc-800');
+        } else {
+          c.classList.remove('scanning', 'border-red-500/70');
+          c.classList.add('border-zinc-800');
+        }
+      });
+
+      const d = suspectsData[index];
+      document.getElementById('scanPanelCode').textContent = d.code;
+      document.getElementById('scanPanelName').textContent = d.name;
+      document.getElementById('scanTruthProb').textContent = d.truthProb;
+      document.getElementById('scanBlink').textContent = d.blink;
+      document.getElementById('scanTremor').textContent = d.tremor;
+      document.getElementById('scanAudioCue').textContent = d.audioCue;
+      document.getElementById('scanCounter').textContent = d.counter;
+      document.getElementById('scanDeepNote').textContent = d.deepNote;
+    }
+
+    /*************************************************************************
+     * 6. PLAYABLE 1-TURN BLUFFING CLIMAX TABLE ENGINE
+     *************************************************************************/
+    const bluffScenarios = [
+      {
+        badge: 'SCENARIO #1 // BLUFF DETECTION',
+        speaker: '[ 맞은편 상대: 박진우 (코너에 몰린 배신자) ]',
+        speech: '"이번에 내려놓은 카드 3장… 진짜 전부 KING이야! 제발 믿어줘, 나 이번 판에 걸리면 끝장이야…"',
+        isLying: true,
+        cards: [
+          { corner: 'K♠', center: 'KING', sub: 'TRUTH', isBad: false },
+          { corner: 'JOKER', center: 'JOKER', sub: 'FATAL BLUFF', isBad: true },
+          { corner: 'Q♥', center: 'QUEEN', sub: 'FAKE CARD', isBad: true }
+        ],
+        initialClue: '기본 관찰: 상대가 카드를 내려놓자마자 시선을 바닥으로 급격히 회피했습니다.',
+        extraClues: [
+          '정밀 단서 #1 [3D 오디오]: 카드를 밀어 넣기 직전, 마른침을 삼키며 1.4초간 호흡이 완전히 멈췄습니다.',
+          '정밀 단서 #2 [안면 셰이더]: 동공이 7.4mm로 급격히 확장되었으며 왼손 약지가 미세하게 떨리고 있습니다. (전형적인 거짓말 징후)'
+        ],
+        winLiarMsg: '완벽한 간파입니다! 박진우가 멈춘 숨소리와 동공 확장을 정확히 읽어내고 JOKER와 QUEEN을 적발했습니다.',
+        losePassMsg: '속았습니다! 상대의 애원하는 연기에 넘어가 JOKER가 섞인 가짜 패를 그대로 통과시켰습니다.'
+      },
+      {
+        badge: 'SCENARIO #2 // REVERSE PSYCHOLOGY TRAP',
+        speaker: '[ 맞은편 상대: 윤서연 (미소 짓는 협잡꾼) ]',
+        speech: '"어쩌지…? 손이 조금 떨리네. 이번에 낸 3장 전부 KING인데… 못 믿겠으면 지금 바로 나를 지목해 볼래?"',
+        isLying: false, // 진짜 KING 3장을 들고 일부러 떨면서 함정을 판 경우!
+        cards: [
+          { corner: 'K♠', center: 'KING', sub: 'TRUTH', isBad: false },
+          { corner: 'K♦', center: 'KING', sub: 'TRUTH', isBad: false },
+          { corner: 'K♣', center: 'KING', sub: 'TRUTH', isBad: false }
+        ],
+        initialClue: '기본 관찰: 상대가 보란 듯이 왼손을 덜덜 떨며 당신이 [거짓말 지목]을 누르기를 기다리고 있습니다.',
+        extraClues: [
+          '정밀 단서 #1 [생체 맥박]: 손은 떨고 있지만 실제 심박수는 76 BPM으로 놀라울 만큼 안정되어 있습니다!',
+          '정밀 단서 #2 [안면 셰이더]: 입꼬리가 비대칭으로 올라가 있습니다. 당신이 섣불리 지목하도록 유도하는 역심리 함정(Bait)입니다!'
+        ],
+        winPassMsg: '소름 돋는 통찰력입니다! 윤서연이 일부러 손을 떨며 파놓은 역심리 함정(진짜 KING 3장)을 간파하고 침착하게 턴을 넘겼습니다.',
+        loseLiarMsg: '역심리 함정에 걸려들었습니다! 상대가 일부러 연출한 가짜 손 떨림에 속아 진짜 KING 3장을 지목하고 말았습니다.'
+      },
+      {
+        badge: 'SCENARIO #3 // COLD-BLOODED POKERFACE',
+        speaker: '[ 맞은편 상대: 강태하 (냉혈한 포커페이스) ]',
+        speech: '"확률상 내가 여기서 무리할 이유는 없지. 내려놓은 3장 모두 KING이다. 턴을 넘기시지."',
+        isLying: true,
+        cards: [
+          { corner: 'K♥', center: 'KING', sub: 'TRUTH', isBad: false },
+          { corner: 'A♠', center: 'ACE', sub: 'FAKE CARD', isBad: true },
+          { corner: 'JOKER', center: 'JOKER', sub: 'FATAL BLUFF', isBad: true }
+        ],
+        initialClue: '기본 관찰: 심박수 70 BPM. 표정 변화가 전혀 없어 육안으로는 진위 판별이 불가능해 보입니다.',
+        extraClues: [
+          '정밀 단서 #1 [모션 캡처]: 패에서 손을 떼는 순간, 오른쪽 검지로 테이블 모서리를 딱 한 번 두드렸습니다!',
+          '정밀 단서 #2 [안면 셰이더]: 눈을 전혀 깜빡이지 않고 9초 연속 당신의 미간을 응시하고 있습니다. (강태하 특유의 블러핑 통제 버릇)'
+        ],
+        winLiarMsg: '천재적인 관찰력입니다! 심박수조차 변하지 않는 강태하의 무의식적 검지 탭 버릇을 포착해 치명적인 블러핑을 박살 냈습니다.',
+        losePassMsg: '냉혈한 포커페이스에 압도당했습니다. 평온한 목소리 뒤에 숨겨진 ACE와 JOKER를 놓치고 턴을 넘겼습니다.'
+      }
+    ];
+
+    let currentScenarioIdx = 0;
+    let cluesLeft = 2;
+    let isRoundResolved = false;
+    let totalWins = 0;
+    let totalPlayed = 0;
+
+    function loadScenario(idx) {
+      const s = bluffScenarios[idx];
+      cluesLeft = 2;
+      isRoundResolved = false;
+
+      document.getElementById('demoRoundBadge').textContent = s.badge;
+      document.getElementById('opponentSpeakerTag').textContent = s.speaker;
+      document.getElementById('opponentSpeech').innerHTML = s.speech;
+      document.getElementById('clueCountLeft').textContent = cluesLeft;
+      document.getElementById('btnObserveClue').disabled = false;
+      document.getElementById('btnObserveClue').classList.remove('opacity-40');
+
+      const logList = document.getElementById('clueLogList');
+      logList.innerHTML = `<li>${s.initialClue}</li>`;
+
+      // 카드 뒷면 상태로 초기화 및 앞면 데이터 세팅
+      for (let i = 0; i < 3; i++) {
+        const cardEl = document.getElementById(`tableCard${i}`);
+        cardEl.classList.remove('flipped');
+        const cData = s.cards[i];
+        const cornerEl = document.getElementById(`cardCorner${i}`);
+        const centerEl = document.getElementById(`cardCenter${i}`);
+        const subEl = document.getElementById(`cardSub${i}`);
+
+        cornerEl.textContent = cData.corner;
+        centerEl.textContent = cData.center;
+        subEl.textContent = cData.sub;
+
+        if (cData.isBad) {
+          cornerEl.className = 'self-start font-cinzel text-lg font-black text-red-500';
+          centerEl.className = 'font-cinzel text-2xl sm:text-3xl font-black text-red-500';
+          subEl.className = 'self-end font-mono-tech text-[10px] text-red-400';
+        } else {
+          cornerEl.className = 'self-start font-cinzel text-lg font-black text-amber-400';
+          centerEl.className = 'font-cinzel text-2xl sm:text-3xl font-black text-white';
+          subEl.className = 'self-end font-mono-tech text-[10px] text-emerald-400';
+        }
+      }
+
+      document.getElementById('actionButtonsGroup').classList.remove('hidden');
+      document.getElementById('judgmentResultPanel').classList.add('hidden');
+    }
+
+    function observeOpponentTell() {
+      if (cluesLeft <= 0 || isRoundResolved) return;
+      playUISound('scan');
+      triggerECGSpike();
+
+      const s = bluffScenarios[currentScenarioIdx];
+      const clueIndex = 2 - cluesLeft;
+      const clueText = s.extraClues[clueIndex];
+
+      const li = document.createElement('li');
+      li.className = 'text-amber-300 font-semibold animate-pulse';
+      li.textContent = clueText;
+      document.getElementById('clueLogList').appendChild(li);
+
+      cluesLeft--;
+      document.getElementById('clueCountLeft').textContent = cluesLeft;
+      if (cluesLeft === 0) {
+        const btn = document.getElementById('btnObserveClue');
+        btn.disabled = true;
+        btn.classList.add('opacity-40');
+      }
+    }
+
+    function inspectSingleCard() {
+      if (!isRoundResolved) {
+        observeOpponentTell();
+      }
+    }
+
+    function executeJudgment(decision) {
+      if (isRoundResolved) return;
+      isRoundResolved = true;
+      totalPlayed++;
+
+      playUISound('climax');
+
+      // 1. 3장의 카드 순차적 3D 오픈
+      for (let i = 0; i < 3; i++) {
+        setTimeout(() => {
+          document.getElementById(`tableCard${i}`).classList.add('flipped');
+        }, i * 160);
+      }
+
+      // 2. 강렬한 레드 플래시 & 화면 쉐이크
+      const flash = document.getElementById('redFlashOverlay');
+      flash.style.opacity = '0.65';
+      setTimeout(() => { flash.style.opacity = '0'; }, 380);
+
+      document.body.classList.add('shake-screen');
+      setTimeout(() => { document.body.classList.remove('shake-screen'); }, 680);
+
+      // 3. 승패 판정 계산
+      const s = bluffScenarios[currentScenarioIdx];
+      let playerWon = false;
+      let explanation = '';
+
+      if (decision === 'CALL_LIAR') {
+        if (s.isLying) {
+          playerWon = true;
+          explanation = s.winLiarMsg;
+        } else {
+          playerWon = false;
+          explanation = s.loseLiarMsg;
+        }
+      } else {
+        // PASS_TURN
+        if (!s.isLying) {
+          playerWon = true;
+          explanation = s.winPassMsg;
+        } else {
+          playerWon = false;
+          explanation = s.losePassMsg;
+        }
+      }
+
+      if (playerWon) totalWins++;
+      document.getElementById('scoreWins').textContent = totalWins;
+      document.getElementById('scoreTotal').textContent = totalPlayed;
+
+      // 4. 결과 UI 표시
+      const badge = document.getElementById('judgmentBadge');
+      const headline = document.getElementById('judgmentHeadline');
+      const desc = document.getElementById('judgmentExplanation');
+
+      if (playerWon) {
+        badge.textContent = 'SURVIVED // PSYCHOLOGICAL VICTORY';
+        badge.className = 'inline-block font-mono-tech text-xs px-3 py-1 mb-2 border border-emerald-500 bg-emerald-950/60 text-emerald-300';
+        headline.textContent = '심리전 판정 승리 : 상대의 의도를 완벽히 꿰뚫었습니다!';
+        headline.className = 'text-xl sm:text-3xl font-black text-emerald-400 mb-3';
+      } else {
+        badge.textContent = 'DECEIVED // FATAL MISTAKE';
+        badge.className = 'inline-block font-mono-tech text-xs px-3 py-1 mb-2 border border-red-500 bg-red-950/60 text-red-300';
+        headline.textContent = '심리전 판정 패배 : 상대의 설계에 휘말렸습니다!';
+        headline.className = 'text-xl sm:text-3xl font-black text-red-500 mb-3';
+      }
+
+      desc.textContent = explanation;
+      document.getElementById('actionButtonsGroup').classList.add('hidden');
+      document.getElementById('judgmentResultPanel').classList.remove('hidden');
+    }
+
+    function setupNewBluffRound() {
+      playUISound('scan');
+      currentScenarioIdx = (currentScenarioIdx + 1) % bluffScenarios.length;
+      loadScenario(currentScenarioIdx);
+    }
+
+    // 모달 제어 및 사전예약 폼 처리
+    function openWishlistModal() {
+      playUISound('scan');
+      const modal = document.getElementById('wishlistModal');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+    }
+
+    function closeWishlistModal() {
+      const modal = document.getElementById('wishlistModal');
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+    }
+
+    function submitPreRegistration(e) {
+      e.preventDefault();
+      playUISound('scan');
+      document.getElementById('preRegSuccessMsg').classList.remove('hidden');
+      document.getElementById('preRegEmail').value = '';
+    }
+
+    // 초기 입장 모달 버튼 바인딩
+    document.getElementById('btnEnterSoundOn').addEventListener('click', () => {
+      initAudioEngine();
+      const gate = document.getElementById('entryGateModal');
+      gate.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => gate.remove(), 700);
+    });
+
+    document.getElementById('btnEnterMuted').addEventListener('click', () => {
+      isSoundEnabled = false;
+      updateSoundToggleUI();
+      scheduleNextHeartbeat();
+      const gate = document.getElementById('entryGateModal');
+      gate.classList.add('opacity-0', 'pointer-events-none');
+      setTimeout(() => gate.remove(), 700);
+    });
+
+    document.getElementById('btnSoundToggle').addEventListener('click', toggleSound);
+
+    // 페이지 로드 시 첫 번째 시나리오 초기화
+    window.addEventListener('DOMContentLoaded', () => {
+      loadScenario(0);
+    });
+  </script>
+  <a href="../전시관 2/index.html#work-3" style="position:fixed;bottom:22px;left:22px;z-index:10001;padding:10px 18px;border-radius:999px;background:rgba(12,10,16,0.88);border:1px solid #d9b471;color:#fff4dc;font-family:sans-serif;font-size:12px;font-weight:600;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.65);backdrop-filter:blur(10px);cursor:pointer !important;">← 인덕 전시장 (전시관 2) 액자 #03 으로 돌아가기</a>
+</body>
+</html>

@@ -1,0 +1,1371 @@
+﻿<!DOCTYPE html>
+<html lang="ko" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PROJECT: LIAR'S GAMBIT - Game Design Document</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Google Fonts: Cinzel, Noto Serif KR, Noto Sans KR, JetBrains Mono -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;900&family=JetBrains+Mono:wght@400;600;700&family=Noto+Sans+KR:wght@300;400;500;700&family=Noto+Serif+KR:wght@600;700;900&display=swap" rel="stylesheet">
+    
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        obsidian: '#0b0b0e',
+                        charcoal: '#14141b',
+                        panel: '#1b1b24',
+                        crimson: {
+                            DEFAULT: '#c92a2a',
+                            bright: '#e03131',
+                            dark: '#5c0f0f',
+                            glow: 'rgba(224, 49, 49, 0.35)'
+                        },
+                        gold: {
+                            DEFAULT: '#d4af37',
+                            light: '#f3e5ab',
+                            dim: '#8a7122',
+                            glow: 'rgba(212, 175, 55, 0.25)'
+                        },
+                        parchment: '#e5e5e0'
+                    },
+                    fontFamily: {
+                        display: ['Cinzel', 'Noto Serif KR', 'serif'],
+                        serifkr: ['Noto Serif KR', 'serif'],
+                        sanskr: ['Noto Sans KR', 'sans-serif'],
+                        mono: ['JetBrains Mono', 'monospace']
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        :root {
+            --bg-obsidian: #0b0b0e;
+            --bg-charcoal: #14141b;
+            --accent-crimson: #e03131;
+            --accent-gold: #d4af37;
+        }
+
+        body {
+            background-color: var(--bg-obsidian);
+            color: #e5e5e0;
+            font-family: 'Noto Sans KR', sans-serif;
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 50% 0%, rgba(201, 42, 42, 0.12) 0%, transparent 60%),
+                radial-gradient(circle at 85% 90%, rgba(212, 175, 55, 0.07) 0%, transparent 50%),
+                repeating-linear-gradient(45deg, rgba(255,255,255,0.01) 0px, rgba(255,255,255,0.01) 1px, transparent 1px, transparent 10px);
+        }
+
+        /* Subtle Film Grain & Noir Vignette */
+        .noir-vignette {
+            pointer-events: none;
+            position: fixed;
+            inset: 0;
+            z-index: 40;
+            box-shadow: inset 0 0 110px rgba(0, 0, 0, 0.85);
+            transition: box-shadow 0.3s ease;
+        }
+
+        .tension-high .noir-vignette {
+            box-shadow: inset 0 0 140px rgba(224, 49, 49, 0.55), inset 0 0 60px rgba(0, 0, 0, 0.95);
+            animation: pulse-crimson 1.2s infinite ease-in-out;
+        }
+
+        @keyframes pulse-crimson {
+            0%, 100% { opacity: 0.85; }
+            50% { opacity: 1; }
+        }
+
+        /* GDD Page Sheet Architecture (A4 Landscape Ratio Friendly) */
+        .gdd-page {
+            background: linear-gradient(145deg, #15151d 0%, #0f0f15 100%);
+            border: 1px solid rgba(212, 175, 55, 0.28);
+            box-shadow: 0 25px 60px -15px rgba(0, 0, 0, 0.9), 0 0 25px rgba(201, 42, 42, 0.06);
+            position: relative;
+            overflow: hidden;
+            transition: transform 0.25s ease, border-color 0.25s ease;
+        }
+
+        /* Corner Ornate Accents */
+        .gdd-page::before,
+        .gdd-page::after {
+            content: '';
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-color: #d4af37;
+            pointer-events: none;
+            opacity: 0.65;
+        }
+        .gdd-page::before {
+            top: 12px;
+            left: 12px;
+            border-top: 2px solid #d4af37;
+            border-left: 2px solid #d4af37;
+        }
+        .gdd-page::after {
+            bottom: 12px;
+            right: 12px;
+            border-bottom: 2px solid #d4af37;
+            border-right: 2px solid #d4af37;
+        }
+
+        /* Confidential Stamp Effect */
+        .stamp-badge {
+            border: 2px solid #e03131;
+            color: #e03131;
+            text-transform: uppercase;
+            letter-spacing: 0.18em;
+            transform: rotate(-4deg);
+            box-shadow: 0 0 15px rgba(224, 49, 49, 0.25), inset 0 0 10px rgba(224, 49, 49, 0.15);
+            background: rgba(92, 15, 15, 0.2);
+        }
+
+        /* Edit Mode Visual Cues */
+        body.edit-mode-active [contenteditable="true"] {
+            outline: 1px dashed rgba(212, 175, 55, 0.65);
+            background-color: rgba(212, 175, 55, 0.06);
+            border-radius: 4px;
+            padding-left: 4px;
+            padding-right: 4px;
+            cursor: text;
+            transition: all 0.15s ease;
+        }
+        body.edit-mode-active [contenteditable="true"]:focus {
+            outline: 2px solid #e03131;
+            background-color: rgba(224, 49, 49, 0.12);
+        }
+
+        /* ECG Heartbeat Line Animation */
+        @keyframes ecg-move {
+            0% { stroke-dashoffset: 600; }
+            100% { stroke-dashoffset: 0; }
+        }
+        .ecg-path {
+            stroke-dasharray: 600;
+            stroke-dashoffset: 600;
+            animation: ecg-move 2.2s linear infinite;
+        }
+
+        /* Playing Card Hover Effects */
+        .devil-card {
+            background: linear-gradient(160deg, #1f1f2b 0%, #111117 100%);
+            border: 1px solid rgba(212, 175, 55, 0.35);
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .devil-card:hover {
+            transform: translateY(-5px);
+            border-color: #e03131;
+            box-shadow: 0 10px 25px -5px rgba(224, 49, 49, 0.35);
+        }
+
+        /* Slide Mode vs Scroll Document Mode */
+        body.slide-view-mode .gdd-page {
+            display: none;
+        }
+        body.slide-view-mode .gdd-page.active-slide {
+            display: block;
+            animation: fadeInSlide 0.3s ease-out;
+        }
+        @keyframes fadeInSlide {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* CRITICAL: Print & PDF Export Optimization */
+        @media print {
+            @page {
+                size: A4 landscape;
+                margin: 0;
+            }
+            html, body {
+                background-color: #0b0b0e !important;
+                color: #e5e5e0 !important;
+                -webkit-print-color-adjust: exact !important;
+                print-color-adjust: exact !important;
+                margin: 0 !important;
+                padding: 0 !important;
+                width: 100% !important;
+            }
+            .no-print {
+                display: none !important;
+            }
+            body.slide-view-mode .gdd-page {
+                display: block !important;
+            }
+            #gdd-container {
+                padding: 0 !important;
+                margin: 0 !important;
+                max-width: none !important;
+                width: 100% !important;
+            }
+            .gdd-page {
+                width: 297mm !important;
+                min-height: 209.5mm !important;
+                max-height: 210mm !important;
+                margin: 0 !important;
+                padding: 12mm 15mm !important;
+                border: 1px solid rgba(212, 175, 55, 0.4) !important;
+                border-radius: 0 !important;
+                page-break-after: always !important;
+                break-after: page !important;
+                page-break-inside: avoid !important;
+                box-shadow: none !important;
+                box-sizing: border-box !important;
+            }
+            .gdd-page:last-child {
+                page-break-after: auto !important;
+                break-after: auto !important;
+            }
+        }
+    </style>
+</head>
+<body class="min-h-screen selection:bg-crimson selection:text-white">
+
+    <!-- Noir Vignette Overlay -->
+    <div class="noir-vignette no-print" id="vignette-overlay"></div>
+
+    <!-- Floating Top Control Bar (Hidden when printing) -->
+    <header class="no-print sticky top-0 z-50 backdrop-blur-md bg-obsidian/90 border-b border-gold/25 px-4 py-3 shadow-2xl">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <!-- Brand & Status -->
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded bg-crimson/20 border border-crimson flex items-center justify-center text-crimson font-display font-bold text-lg shadow-inner">
+                    ♠
+                </div>
+                <div>
+                    <div class="flex items-center gap-2">
+                        <span class="font-display font-bold tracking-wider text-gold text-sm sm:text-base">PROJECT: LIAR'S GAMBIT</span>
+                        <span class="text-[11px] font-mono uppercase px-2 py-0.5 rounded bg-crimson/20 text-crimson-bright border border-crimson/40">GDD v1.4</span>
+                    </div>
+                    <p class="text-xs text-gray-400 hidden sm:block">Unity 3D 하이-스테이크 심리 블러핑 서바이벌 기획서</p>
+                </div>
+            </div>
+
+            <!-- Page Quick Jump / Slide Controls -->
+            <div class="flex items-center gap-1.5 bg-charcoal p-1 rounded-lg border border-white/10">
+                <button onclick="switchPage(0)" class="page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition bg-crimson text-white font-semibold" data-page="0">01.표지/개요</button>
+                <button onclick="switchPage(1)" class="page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition text-gray-400 hover:text-white" data-page="1">02.코어루프/덱</button>
+                <button onclick="switchPage(2)" class="page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition text-gray-400 hover:text-white" data-page="2">03.심리전/룰렛</button>
+                <button onclick="switchPage(3)" class="page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition text-gray-400 hover:text-white" data-page="3">04.UI/카메라연출</button>
+                <button onclick="switchPage(4)" class="page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition text-gray-400 hover:text-white" data-page="4">05.아키텍처/일정</button>
+            </div>
+
+            <!-- Action Controls: Edit Mode, View Mode, Print PDF -->
+            <div class="flex items-center gap-2">
+                <button id="toggle-view-btn" onclick="toggleViewMode()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-panel hover:bg-white/10 text-gray-200 border border-white/15 flex items-center gap-1.5 transition" title="스크롤 문서 뷰와 슬라이드 발표 뷰를 전환합니다">
+                    <i class="fa-solid fa-layer-group text-gold"></i>
+                    <span id="view-mode-label">슬라이드 뷰</span>
+                </button>
+
+                <button id="toggle-edit-btn" onclick="toggleEditMode()" class="px-3 py-1.5 rounded-lg text-xs font-medium bg-panel hover:bg-gold/20 text-gold-light border border-gold/40 flex items-center gap-1.5 transition" title="브라우저에서 모든 기획서 텍스트를 즉시 수정합니다">
+                    <i class="fa-solid fa-pen-nib"></i>
+                    <span id="edit-mode-label">편집 모드 켜기</span>
+                </button>
+
+                <button onclick="triggerPrintPDF()" class="px-4 py-1.5 rounded-lg text-xs font-bold bg-gradient-to-r from-crimson to-red-700 hover:from-red-600 hover:to-crimson text-white shadow-lg shadow-crimson/30 border border-red-400/30 flex items-center gap-2 transition">
+                    <i class="fa-solid fa-file-pdf"></i>
+                    <span>인쇄 / PDF 저장</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Edit Mode Helper Banner -->
+        <div id="edit-helper-banner" class="hidden max-w-7xl mx-auto mt-2 pt-2 border-t border-gold/20 flex items-center justify-between text-xs text-gold-light">
+            <span><i class="fa-solid fa-circle-info mr-1.5 text-gold"></i><strong>편집 모드 활성화됨:</strong> 점선으로 표시된 모든 제목, 수치, 설명을 클릭하여 직접 수정할 수 있습니다. 수정한 내용은 PDF 인쇄 시 그대로 반영됩니다.</span>
+            <button onclick="resetCustomEdits()" class="text-red-400 hover:underline font-mono text-[11px]"><i class="fa-solid fa-rotate-left mr-1"></i>초기 내용으로 복원</button>
+        </div>
+    </header>
+
+    <!-- Main Document Container -->
+    <main id="gdd-container" class="max-w-6xl mx-auto px-4 py-8 space-y-10">
+
+        <!-- =====================================================================
+             PAGE 1: COVER & EXECUTIVE SUMMARY (표지 & 게임 개요)
+             ===================================================================== -->
+        <section class="gdd-page rounded-xl p-6 sm:p-10 active-slide" data-page-index="0">
+            <!-- Top Secret Header Strip -->
+            <div class="flex flex-wrap items-center justify-between gap-4 border-b border-gold/25 pb-4 mb-6">
+                <div class="flex items-center gap-3">
+                    <span class="font-mono text-xs text-gold tracking-widest uppercase">DOC-ID: LG-2026-UNITY3D</span>
+                    <span class="text-white/20">|</span>
+                    <span class="font-mono text-xs text-gray-400">CLASSIFICATION: SYNDICATE EYES ONLY</span>
+                </div>
+                <div class="stamp-badge px-3 py-1 font-mono text-xs font-bold">
+                    CONFIDENTIAL // BLOOD CONTRACT
+                </div>
+            </div>
+
+            <!-- Main Cover Title Banner -->
+            <div class="relative rounded-xl bg-gradient-to-r from-obsidian via-charcoal to-crimson-dark/40 border border-gold/30 p-6 sm:p-8 mb-6 overflow-hidden">
+                <!-- Background Suit Watermark -->
+                <div class="absolute -right-6 -bottom-10 text-[160px] text-white/[0.03] font-display select-none pointer-events-none">
+                    ♠
+                </div>
+
+                <div class="relative z-10 flex flex-col lg:flex-row lg:items-end justify-between gap-6">
+                    <div>
+                        <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-crimson/20 border border-crimson/50 text-crimson-bright text-xs font-mono mb-3">
+                            <span class="w-2 h-2 rounded-full bg-crimson-bright animate-ping"></span>
+                            HIGH-STAKES PSYCHOLOGICAL BLUFFING SURVIVAL
+                        </div>
+                        <h1 class="editable-field font-display text-3xl sm:text-5xl font-black tracking-tight text-white leading-none mb-2">
+                            LIAR'S GAMBIT <span class="text-crimson-bright">:</span> <span class="text-gold font-serifkr font-bold text-2xl sm:text-4xl">더 블러드 컨트랙트</span>
+                        </h1>
+                        <p class="editable-field text-gray-300 font-serifkr text-base sm:text-lg">
+                            "거짓말은 탄환보다 빠르게 심장을 관통한다 — <span class="text-gold-light">Liar's Bar의 러시안 룰렛</span>과 <span class="text-crimson-bright">라이어 게임의 필승 심리전</span>의 결합"
+                        </p>
+                    </div>
+
+                    <div class="flex items-center gap-3 shrink-0 font-mono text-xs">
+                        <div class="bg-obsidian/90 border border-white/10 px-3.5 py-2.5 rounded-lg text-center">
+                            <div class="text-gray-400 text-[10px]">ENGINE</div>
+                            <div class="editable-field text-white font-bold mt-0.5">Unity 6 (URP)</div>
+                        </div>
+                        <div class="bg-obsidian/90 border border-white/10 px-3.5 py-2.5 rounded-lg text-center">
+                            <div class="text-gray-400 text-[10px]">PLAYERS</div>
+                            <div class="editable-field text-gold font-bold mt-0.5">2 ~ 4인 멀티/AI</div>
+                        </div>
+                        <div class="bg-obsidian/90 border border-white/10 px-3.5 py-2.5 rounded-lg text-center">
+                            <div class="text-gray-400 text-[10px]">TARGET</div>
+                            <div class="editable-field text-crimson-bright font-bold mt-0.5">PC Steam</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 2-Column Layout: Metadata Spec Table + Core Vision -->
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Project Metadata Dossier (5 cols) -->
+                <div class="lg:col-span-5 bg-obsidian/70 border border-white/10 rounded-xl p-5 flex flex-col justify-between">
+                    <div>
+                        <h2 class="font-serifkr font-bold text-gold text-base flex items-center gap-2 mb-4 border-b border-white/10 pb-2">
+                            <i class="fa-solid fa-folder-open text-crimson-bright"></i>
+                            프로젝트 기본 명세 (Project Dossier)
+                        </h2>
+                        <table class="w-full text-xs sm:text-sm border-collapse">
+                            <tbody class="divide-y divide-white/10">
+                                <tr>
+                                    <th class="py-2.5 text-left text-gray-400 font-normal w-28">프로젝트 가제</th>
+                                    <td class="editable-field py-2.5 text-white font-semibold">라이어즈 갬빗 (Liar's Gambit)</td>
+                                </tr>
+                                <tr>
+                                    <th class="py-2.5 text-left text-gray-400 font-normal">핵심 장르</th>
+                                    <td class="editable-field py-2.5 text-gray-200">1인칭 테이블탑 심리 블러핑 & 데스게임</td>
+                                </tr>
+                                <tr>
+                                    <th class="py-2.5 text-left text-gray-400 font-normal">카메라 시점</th>
+                                    <td class="editable-field py-2.5 text-gray-200">1인칭 착석 고정 + 시네머신 다이나믹 클로즈업</td>
+                                </tr>
+                                <tr>
+                                    <th class="py-2.5 text-left text-gray-400 font-normal">레퍼런스</th>
+                                    <td class="editable-field py-2.5 text-gray-200"><span class="text-gold">Liar's Bar</span> (직관적 룰렛/블러핑) + <span class="text-crimson-bright">Liar Game</span> (심리 파훼/밀약/부채)</td>
+                                </tr>
+                                <tr>
+                                    <th class="py-2.5 text-left text-gray-400 font-normal">핵심 차별점</th>
+                                    <td class="editable-field py-2.5 text-gray-200">바이오메트릭 심박수 역블러핑, 비밀 계약(배신), 특수 마인드 카드</td>
+                                </tr>
+                                <tr>
+                                    <th class="py-2.5 text-left text-gray-400 font-normal">타겟 플레이타임</th>
+                                    <td class="editable-field py-2.5 text-gray-200 font-mono">1 매치당 12 ~ 18분 (3라운드 부채 정산제)</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Mood Tag Pills -->
+                    <div class="mt-4 pt-3 border-t border-white/10">
+                        <div class="text-[11px] font-mono text-gray-400 mb-2">ATMOSPHERE KEYWORDS</div>
+                        <div class="flex flex-wrap gap-1.5">
+                            <span class="px-2.5 py-1 rounded bg-crimson/15 border border-crimson/40 text-crimson-bright text-xs">#지하_신디케이트</span>
+                            <span class="px-2.5 py-1 rounded bg-gold/10 border border-gold/30 text-gold-light text-xs">#심박수_역블러핑</span>
+                            <span class="px-2.5 py-1 rounded bg-white/5 border border-white/15 text-gray-300 text-xs">#필승법과_파훼</span>
+                            <span class="px-2.5 py-1 rounded bg-white/5 border border-white/15 text-gray-300 text-xs">#배신과_밀약</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Core Design Pillars (7 cols) -->
+                <div class="lg:col-span-7 flex flex-col justify-between space-y-4">
+                    <div class="bg-obsidian/70 border border-white/10 rounded-xl p-5">
+                        <h2 class="font-serifkr font-bold text-gold text-base flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                            <i class="fa-solid fa-crosshairs text-crimson-bright"></i>
+                            기획 의도 및 핵심 비전 (Core Vision)
+                        </h2>
+                        <p class="editable-field text-xs sm:text-sm text-gray-300 leading-relaxed mb-4">
+                            기존 <strong>&lt;Liar's Bar&gt;</strong>는 누구나 1분 만에 이해할 수 있는 '거짓말 카드 내기'와 '러시안 룰렛'을 결합해 폭발적인 몰입감을 주었지만, 플레이가 반복될수록 <strong>단순 확률과 운(운빨)에 의존하게 되는 한계</strong>가 존재합니다. 본 프로젝트는 여기에 만화/드라마 <strong>&lt;라이어 게임(Liar Game)&gt;</strong> 특유의 <strong>정보 비대칭, 상대의 미세한 동요(Micro-Tells) 리딩, 테이블 밑 비밀 밀약, 그리고 필승법 설계</strong>를 접목하여 <em>"운이 나빠서 죽는 게임이 아니라, 심리전에서 읽혀서 파멸하는 극한의 두뇌 데스게임"</em>을 완성합니다.
+                        </p>
+
+                        <!-- 3 Core Pillars Cards -->
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                            <div class="p-3.5 rounded-lg bg-charcoal border border-crimson/30">
+                                <div class="text-crimson-bright font-mono text-xs font-bold mb-1">PILLAR 01 // TELLS</div>
+                                <h3 class="editable-field font-serifkr font-bold text-white text-sm mb-1.5">생체 신호와 역블러핑</h3>
+                                <p class="editable-field text-xs text-gray-400 leading-normal">
+                                    거짓말을 할 때 치솟는 심박수(BPM), 동공 지진, 손 떨림을 관찰하거나 일부러 가짜 긴장 상태를 연기해 상대를 유인합니다.
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-lg bg-charcoal border border-gold/30">
+                                <div class="text-gold font-mono text-xs font-bold mb-1">PILLAR 02 // EXPLOIT</div>
+                                <h3 class="editable-field font-serifkr font-bold text-white text-sm mb-1.5">정보 독점과 필승 전략</h3>
+                                <p class="editable-field text-xs text-gray-400 leading-normal">
+                                    단순 카드 제출을 넘어, 실린더 탄환 위치를 엿보거나 버려진 패를 역추적하는 특수 행동으로 필승 구도를 설계합니다.
+                                </p>
+                            </div>
+                            <div class="p-3.5 rounded-lg bg-charcoal border border-white/20">
+                                <div class="text-gray-300 font-mono text-xs font-bold mb-1">PILLAR 03 // BETRAYAL</div>
+                                <h3 class="editable-field font-serifkr font-bold text-white text-sm mb-1.5">억대 부채와 비밀 계약</h3>
+                                <p class="editable-field text-xs text-gray-400 leading-normal">
+                                    특정 타겟을 파산시키기 위해 스마트폰으로 은밀한 공조 계약을 맺고, 결정적인 순간 배신하여 부채를 전가합니다.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Bottom Comparison Formula Bar -->
+                    <div class="bg-gradient-to-r from-crimson-dark/40 via-charcoal to-obsidian border border-gold/25 rounded-xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+                        <div class="flex items-center gap-3">
+                            <div class="w-10 h-10 rounded-lg bg-crimson/20 border border-crimson flex items-center justify-center text-crimson-bright shrink-0">
+                                <i class="fa-solid fa-scale-unbalanced-flip"></i>
+                            </div>
+                            <div>
+                                <div class="text-xs font-mono text-gold uppercase">Game Identity Formula</div>
+                                <div class="editable-field text-xs sm:text-sm text-white font-medium">
+                                    <strong>Liar's Bar</strong> (직관적 블러핑 + 1/6 리볼버 처벌) <span class="text-crimson-bright font-bold mx-1">×</span> <strong>Liar Game</strong> (심박수 리딩 + 밀약/배신 + 부채 전가)
+                                </div>
+                            </div>
+                        </div>
+                        <span class="font-mono text-xs text-gray-400 shrink-0">PAGE 01 / 05</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             PAGE 2: CORE LOOP & DEVIL'S DECK (코어 게임 루프 & 덱 구성)
+             ===================================================================== -->
+        <section class="gdd-page rounded-xl p-6 sm:p-10" data-page-index="1">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between border-b border-gold/25 pb-3 mb-6">
+                <div>
+                    <span class="font-mono text-xs text-crimson-bright tracking-widest uppercase">SECTION 02 // CORE MECHANICS & DECK ARCHITECTURE</span>
+                    <h2 class="editable-field font-serifkr text-2xl sm:text-3xl font-bold text-white mt-0.5">코어 게임 루프 &amp; 악마의 덱 (Devil's Deck) 명세</h2>
+                </div>
+                <span class="font-mono text-xs text-gold border border-gold/30 px-2.5 py-1 rounded bg-gold/5">PAGE 02 / 05</span>
+            </div>
+
+            <!-- 5-Step Core Loop Visual Flowchart -->
+            <div class="mb-7">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="font-serifkr font-bold text-gold text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-diagram-project text-crimson-bright"></i>
+                        라운드 진행 5단계 코어 루프 (Turn State Flow)
+                    </h3>
+                    <span class="text-xs font-mono text-gray-400">평균 1라운드 호흡: 2분 30초 ~ 4분</span>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-5 gap-3 relative">
+                    <!-- Step 1 -->
+                    <div class="bg-obsidian/80 border border-white/15 rounded-xl p-4 relative group hover:border-gold/50 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-white/10 text-gold">PHASE 01</span>
+                            <i class="fa-solid fa-coins text-gold/70"></i>
+                        </div>
+                        <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1">판돈 설정 &amp; 딜링</h4>
+                        <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                            이번 라운드의 <strong>'테이블 타겟 카드(예: KING)'</strong>가 선언되고 각 플레이어에게 카드 5장과 기본 부채 칩(-1억 원)이 배분됩니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div class="bg-obsidian/80 border border-white/15 rounded-xl p-4 relative group hover:border-gold/50 transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-white/10 text-gold">PHASE 02</span>
+                            <i class="fa-solid fa-hand-holding-heart text-crimson-bright/80"></i>
+                        </div>
+                        <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1">비밀 밀약 &amp; 선언</h4>
+                        <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                            턴 플레이어는 1~3장의 카드를 뒷면으로 내며 <em>"킹 2장"</em>처럼 선언합니다. 직전 5초간 타 플레이어에게 <strong>비밀 사인</strong>을 보낼 수 있습니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div class="bg-obsidian/80 border border-crimson/40 rounded-xl p-4 relative group hover:border-crimson transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-crimson/20 text-crimson-bright">PHASE 03</span>
+                            <i class="fa-solid fa-heart-pulse text-crimson-bright"></i>
+                        </div>
+                        <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1">심리 탐색 &amp; 마이크로 텔</h4>
+                        <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                            다음 주자는 8초의 제한 시간 동안 상대의 <strong>심박수(BPM), 시선 회피, 발화 속도</strong>를 관찰하며 진위 여부를 추론합니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div class="bg-obsidian/80 border border-gold/40 rounded-xl p-4 relative group hover:border-gold transition">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-gold/20 text-gold-light">PHASE 04</span>
+                            <i class="fa-solid fa-gavel text-gold"></i>
+                        </div>
+                        <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1">콜 (LIAR!) or 패스</h4>
+                        <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                            의심스러우면 테이블의 벨을 쳐 <strong>"LIAR!"</strong>를 선언해 카드를 즉시 공개하고, 넘어가면 본인이 이어서 카드를 덮어 제출합니다.
+                        </p>
+                    </div>
+
+                    <!-- Step 5 -->
+                    <div class="bg-gradient-to-b from-crimson-dark/40 to-obsidian border border-crimson rounded-xl p-4 relative">
+                        <div class="flex items-center justify-between mb-2">
+                            <span class="font-mono text-[11px] px-2 py-0.5 rounded bg-crimson text-white font-bold">PHASE 05</span>
+                            <i class="fa-solid fa-skull text-crimson-bright"></i>
+                        </div>
+                        <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1">처벌 룰렛 &amp; 부채 전가</h4>
+                        <p class="editable-field text-xs text-gray-300 leading-relaxed">
+                            패배자는 리볼버 격발(실탄 확률 <span class="font-mono text-crimson-bright">N/6</span>)을 수행하며, 생존하더라도 승리자의 <strong>부채 5,000만 원</strong>을 강제로 떠안습니다.
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Devil's Deck Specification (24 Cards Total) -->
+            <div>
+                <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                    <h3 class="font-serifkr font-bold text-gold text-sm sm:text-base flex items-center gap-2">
+                        <i class="fa-solid fa-layer-group text-crimson-bright"></i>
+                        악마의 덱 구성 (Total 24 Cards = 기본 패 20장 + 라이어 게임 전술 카드 4장)
+                    </h3>
+                    <span class="text-xs font-mono text-crimson-bright bg-crimson/10 border border-crimson/30 px-2.5 py-0.5 rounded">
+                        *전술 카드는 라운드당 1회만 발동 가능
+                    </span>
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                    <!-- Card 1: Royal Blood Cards -->
+                    <div class="devil-card rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+                                <span class="font-display font-bold text-lg text-white">♠ K / Q / A</span>
+                                <span class="font-mono text-xs px-2 py-0.5 rounded bg-white/10 text-gray-300">각 6장 (총 18장)</span>
+                            </div>
+                            <h4 class="editable-field font-serifkr font-bold text-gold text-sm mb-1.5">로열 블러드 카드 (기본 패)</h4>
+                            <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                                라운드 시작 시 지정되는 테이블 타겟 카드(King, Queen, Ace)입니다. 타겟과 일치하면 <strong>'진실(Truth)'</strong>, 불일치하면 <strong>'거짓(Bluff)'</strong> 판정을 받습니다.
+                            </p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-white/10 flex justify-between text-[11px] font-mono text-gray-500">
+                            <span>TYPE: STANDARD</span>
+                            <span class="text-gold">BASE PROB: 75%</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 2: Devil's Joker -->
+                    <div class="devil-card rounded-xl p-4 flex flex-col justify-between">
+                        <div>
+                            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+                                <span class="font-display font-bold text-lg text-crimson-bright">★ JOKER</span>
+                                <span class="font-mono text-xs px-2 py-0.5 rounded bg-crimson/20 text-crimson-bright">총 2장</span>
+                            </div>
+                            <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1.5">광대의 면죄부 (와일드카드)</h4>
+                            <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                                모든 타겟 카드를 대체하는 절대 진실 카드입니다. 단, 조커가 포함된 패에 상대가 <strong>'LIAR!'를 외쳐 실패할 경우, 상대는 리볼버를 2연속 격발</strong>해야 합니다.
+                            </p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-white/10 flex justify-between text-[11px] font-mono text-gray-500">
+                            <span>TYPE: WILD / TRAP</span>
+                            <span class="text-crimson-bright">PENALTY x2</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 3: Eye of the Watcher (Liar Game Special) -->
+                    <div class="devil-card rounded-xl p-4 flex flex-col justify-between border-gold/50">
+                        <div>
+                            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+                                <span class="font-display font-bold text-lg text-gold">👁 WATCHER</span>
+                                <span class="font-mono text-xs px-2 py-0.5 rounded bg-gold/20 text-gold-light">특수 2장</span>
+                            </div>
+                            <h4 class="editable-field font-serifkr font-bold text-gold-light text-sm mb-1.5">감시자의 눈 (정보 비대칭)</h4>
+                            <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                                제출 시 일반 카드로 위장되지만, 발동 효과를 쓰면 <strong>본인의 리볼버 다음 약실에 실탄이 있는지 여부(O/X)를 혼자만 확인</strong>하여 필승 블러핑 각을 잡습니다.
+                            </p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-white/10 flex justify-between text-[11px] font-mono text-gray-500">
+                            <span>TYPE: INTEL EXPLOIT</span>
+                            <span class="text-gold-light">CHAMBER PEEK</span>
+                        </div>
+                    </div>
+
+                    <!-- Card 4: Double Contract (Liar Game Special) -->
+                    <div class="devil-card rounded-xl p-4 flex flex-col justify-between border-crimson/50">
+                        <div>
+                            <div class="flex items-center justify-between border-b border-white/10 pb-2 mb-3">
+                                <span class="font-display font-bold text-lg text-crimson-bright">📜 CONTRACT</span>
+                                <span class="font-mono text-xs px-2 py-0.5 rounded bg-crimson/20 text-crimson-bright">특수 2장</span>
+                            </div>
+                            <h4 class="editable-field font-serifkr font-bold text-white text-sm mb-1.5">이중 계약서 (강제 연대보증)</h4>
+                            <p class="editable-field text-xs text-gray-400 leading-relaxed">
+                                이 카드를 섞어 제출한 턴에 'LIAR!' 판정이 벌어지면, <strong>승패와 무관하게 내가 사전 지목한 연대보증인 플레이어에게 부채 페널티의 50%를 강제 전가</strong>합니다.
+                            </p>
+                        </div>
+                        <div class="mt-3 pt-2 border-t border-white/10 flex justify-between text-[11px] font-mono text-gray-500">
+                            <span>TYPE: DEBT SHIFT</span>
+                            <span class="text-crimson-bright">BETRAYAL GIMMICK</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             PAGE 3: DEEP PSYCHOLOGICAL MECHANICS & TENSION SIMULATOR
+             ===================================================================== -->
+        <section class="gdd-page rounded-xl p-6 sm:p-10" data-page-index="2">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between border-b border-gold/25 pb-3 mb-6">
+                <div>
+                    <span class="font-mono text-xs text-crimson-bright tracking-widest uppercase">SECTION 03 // DEEP PSYCHOLOGICAL MECHANICS (LIAR GAME SYSTEM)</span>
+                    <h2 class="editable-field font-serifkr text-2xl sm:text-3xl font-bold text-white mt-0.5">심화 심리전 메커니즘 &amp; 실시간 심박수/룰렛 시뮬레이터</h2>
+                </div>
+                <span class="font-mono text-xs text-gold border border-gold/30 px-2.5 py-1 rounded bg-gold/5">PAGE 03 / 05</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: 3 Core Psychological Systems (7 cols) -->
+                <div class="lg:col-span-7 space-y-4">
+                    <!-- System 1: Biometric Micro-Tells -->
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-4 sm:p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="editable-field font-serifkr font-bold text-gold text-base flex items-center gap-2">
+                                <span class="w-6 h-6 rounded bg-crimson/20 border border-crimson text-crimson-bright font-mono text-xs flex items-center justify-center">01</span>
+                                바이오메트릭 마이크로 텔 &amp; 역블러핑 (Act Pulse)
+                            </h3>
+                            <span class="font-mono text-[11px] text-crimson-bright">BPM Formula Driven</span>
+                        </div>
+                        <p class="editable-field text-xs sm:text-sm text-gray-300 leading-relaxed mb-3">
+                            플레이어가 거짓 패를 내거나 리볼버 실탄 확률이 높을수록 캐릭터의 <strong>스마트워치 심박수(BPM)</strong>가 상승하며 미세한 신체 반응(동공 흔들림, 카드를 쥔 손가락 경련, 거친 숨소리)이 발생합니다. 단, <strong>[강심장/연기 게이지(Composure)]</strong>를 소모하여 <em>진실을 말하면서 일부러 심박수를 150 BPM까지 높여 상대의 'LIAR!' 콜을 유도하는 역블러핑</em>이 가능합니다.
+                        </p>
+                        <div class="bg-charcoal/90 border border-white/10 rounded-lg p-2.5 font-mono text-xs text-gray-300 flex flex-wrap items-center justify-between gap-2">
+                            <span><strong class="text-gold">Target_BPM</strong> = 72 + (Bullet_Ratio × 45) + (Is_Bluffing × 28) + Fake_Pulse_Mod</span>
+                            <span class="text-crimson-bright">Threshold &gt; 135 BPM: 손 떨림 셰이더 활성</span>
+                        </div>
+                    </div>
+
+                    <!-- System 2: Secret Syndicate Deal & Betrayal -->
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-4 sm:p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="editable-field font-serifkr font-bold text-gold text-base flex items-center gap-2">
+                                <span class="w-6 h-6 rounded bg-gold/20 border border-gold text-gold font-mono text-xs flex items-center justify-center">02</span>
+                                테이블 밑 '비밀 밀약(Secret Deal)'과 필승 파훼법
+                            </h3>
+                            <span class="font-mono text-[11px] text-gold">Asymmetric Co-op</span>
+                        </div>
+                        <p class="editable-field text-xs sm:text-sm text-gray-300 leading-relaxed">
+                            테이블 아래 숨겨진 스마트폰 메신저를 통해 특정 플레이어에게 <strong>"이번 턴 내 패를 패스해주면 내 칩 3,000만 원을 양도하겠다"</strong>거나 <strong>"3번 플레이어가 가진 조커 위치 정보를 공유하겠다"</strong>는 밀약을 실시간 전송합니다. 그러나 구두 약속은 언제든 파기(배신)할 수 있어, <span class="text-gold-light">다수결 담합과 배신의 연쇄 작용</span>이 일어납니다.
+                        </p>
+                    </div>
+
+                    <!-- System 3: Debt & Roulette Weight -->
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-4 sm:p-5">
+                        <div class="flex items-center justify-between mb-2">
+                            <h3 class="editable-field font-serifkr font-bold text-gold text-base flex items-center gap-2">
+                                <span class="w-6 h-6 rounded bg-white/10 border border-white/30 text-white font-mono text-xs flex items-center justify-center">03</span>
+                                억대 부채 정산 &amp; 생명 담보 바이인 (Blood Buy-In)
+                            </h3>
+                            <span class="font-mono text-[11px] text-gray-400">High Risk / High Return</span>
+                        </div>
+                        <p class="editable-field text-xs sm:text-sm text-gray-300 leading-relaxed">
+                            단순히 최후의 1인으로 살아남더라도 부채가 가장 많으면 지하 신디케이트의 노예로 전락(배드 엔딩)합니다. 패가 불리한 플레이어는 자신의 리볼버 실린더에 <strong>스스로 실탄 1발을 추가 장전(+1/6)하는 대가로 부채 2억 원을 탕감받거나 특수 전술 카드를 강제 드로우</strong>하는 극단적 도박을 감행할 수 있습니다.
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Psychological Tension & Roulette Simulator Widget (5 cols) -->
+                <div class="lg:col-span-5 bg-gradient-to-b from-charcoal to-obsidian border-2 border-crimson/50 rounded-xl p-5 flex flex-col justify-between shadow-xl">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-white/10 pb-2.5 mb-4">
+                            <div>
+                                <span class="text-[10px] font-mono uppercase tracking-widest text-crimson-bright block">INTERACTIVE GDD PROTOTYPE</span>
+                                <h3 class="font-serifkr font-bold text-white text-base">처벌 룰렛 &amp; 심박수 시뮬레이터</h3>
+                            </div>
+                            <button onclick="resetSimulator()" class="text-xs font-mono px-2.5 py-1 rounded bg-white/10 hover:bg-white/20 text-gray-300 transition">
+                                <i class="fa-solid fa-rotate mr-1"></i>탄창 리셋
+                            </button>
+                        </div>
+
+                        <!-- Revolver Cylinder SVG + Live BPM Monitor -->
+                        <div class="grid grid-cols-2 gap-3 items-center bg-obsidian/90 border border-white/10 rounded-xl p-3.5 mb-4">
+                            <!-- Cylinder SVG -->
+                            <div class="flex flex-col items-center">
+                                <svg id="revolver-svg" viewBox="0 0 120 120" class="w-28 h-28 transition-transform duration-500 ease-out">
+                                    <circle cx="60" cy="60" r="52" fill="#181822" stroke="#d4af37" stroke-width="2.5"/>
+                                    <circle cx="60" cy="60" r="12" fill="#0b0b0e" stroke="#555" stroke-width="2"/>
+                                    <!-- 6 Chambers -->
+                                    <circle id="chamber-0" cx="60" cy="24" r="11" fill="#0b0b0e" stroke="#8a7122" stroke-width="2"/>
+                                    <circle id="chamber-1" cx="91" cy="42" r="11" fill="#0b0b0e" stroke="#8a7122" stroke-width="2"/>
+                                    <circle id="chamber-2" cx="91" cy="78" r="11" fill="#0b0b0e" stroke="#8a7122" stroke-width="2"/>
+                                    <circle id="chamber-3" cx="60" cy="96" r="11" fill="#0b0b0e" stroke="#8a7122" stroke-width="2"/>
+                                    <circle id="chamber-4" cx="29" cy="78" r="11" fill="#0b0b0e" stroke="#8a7122" stroke-width="2"/>
+                                    <circle id="chamber-5" cx="29" cy="42" r="11" fill="#0b0b0e" stroke="#8a7122" stroke-width="2"/>
+                                </svg>
+                                <div class="mt-2 font-mono text-xs text-center">
+                                    격발 누적: <span id="sim-chamber-text" class="text-gold font-bold">0 / 6</span>
+                                    (<span id="sim-prob-text" class="text-crimson-bright">실탄 확률 16.7%</span>)
+                                </div>
+                            </div>
+
+                            <!-- Biometric Heartbeat Monitor -->
+                            <div class="flex flex-col justify-between h-full">
+                                <div class="bg-charcoal border border-crimson/30 rounded-lg p-2.5">
+                                    <div class="flex items-center justify-between text-[11px] font-mono text-gray-400">
+                                        <span>BIOMETRIC BPM</span>
+                                        <i class="fa-solid fa-heart text-crimson-bright animate-ping"></i>
+                                    </div>
+                                    <div class="flex items-baseline gap-1 mt-1">
+                                        <span id="sim-bpm-value" class="font-mono text-3xl font-bold text-white">76</span>
+                                        <span class="font-mono text-xs text-crimson-bright">BPM</span>
+                                    </div>
+                                    <!-- ECG SVG Wave -->
+                                    <svg viewBox="0 0 200 40" class="w-full h-8 mt-1 overflow-visible">
+                                        <path class="ecg-path" d="M0,20 L30,20 L40,10 L50,32 L60,4 L70,36 L80,15 L90,20 L140,20 L150,8 L160,34 L170,20 L200,20" fill="none" stroke="#e03131" stroke-width="2.2"/>
+                                    </svg>
+                                </div>
+
+                                <div class="mt-2 text-[11px] font-mono bg-obsidian p-2 rounded border border-white/10">
+                                    <div class="text-gray-400">MICRO-TELL STATUS:</div>
+                                    <div id="sim-tell-status" class="text-gold font-semibold mt-0.5">안정됨 (포커페이스 유지 중)</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Interactive Simulator Toggles -->
+                        <div class="space-y-2.5 mb-4">
+                            <label class="flex items-center justify-between p-2.5 rounded-lg bg-obsidian/80 border border-white/10 cursor-pointer hover:border-gold/40 transition text-xs">
+                                <span><i class="fa-solid fa-mask text-gold mr-1.5"></i>현재 거짓말(Bluff) 패 제출 중</span>
+                                <input type="checkbox" id="sim-bluff-toggle" onchange="updateSimulatorMetrics()" class="accent-crimson w-4 h-4">
+                            </label>
+                            <label class="flex items-center justify-between p-2.5 rounded-lg bg-obsidian/80 border border-white/10 cursor-pointer hover:border-crimson/40 transition text-xs">
+                                <span><i class="fa-solid fa-bolt text-crimson-bright mr-1.5"></i>역블러핑 발동 (가짜 긴장 BPM 강제 증폭)</span>
+                                <input type="checkbox" id="sim-fake-toggle" onchange="updateSimulatorMetrics()" class="accent-crimson w-4 h-4">
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Trigger Action Button & Result Log -->
+                    <div>
+                        <button id="sim-trigger-btn" onclick="pullSimulatorTrigger()" class="w-full py-3 rounded-lg font-serifkr font-bold text-sm bg-gradient-to-r from-crimson to-red-800 hover:from-red-600 hover:to-crimson text-white shadow-lg shadow-crimson/30 border border-red-400/40 flex items-center justify-center gap-2 transition active:scale-[0.98]">
+                            <i class="fa-solid fa-crosshairs"></i>
+                            <span>처벌 룰렛 방아쇠 당기기 (PULL TRIGGER)</span>
+                        </button>
+                        <div id="sim-log-box" class="mt-2.5 text-center font-mono text-xs py-1.5 px-3 rounded bg-obsidian border border-white/10 text-gray-300">
+                            [대기 중] 방아쇠를 당기거나 블러핑 옵션을 조작해 텐션 변화를 확인하세요.
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             PAGE 4: DIEGETIC UI/UX & UNITY CINEMACHINE CAMERA DIRECTION
+             ===================================================================== -->
+        <section class="gdd-page rounded-xl p-6 sm:p-10" data-page-index="3">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between border-b border-gold/25 pb-3 mb-6">
+                <div>
+                    <span class="font-mono text-xs text-crimson-bright tracking-widest uppercase">SECTION 04 // ART, DIEGETIC UI/UX &amp; CINEMACHINE DIRECTION</span>
+                    <h2 class="editable-field font-serifkr text-2xl sm:text-3xl font-bold text-white mt-0.5">공간 연출 &amp; 1인칭 다이제틱(Diegetic) HUD 와이어프레임</h2>
+                </div>
+                <span class="font-mono text-xs text-gold border border-gold/30 px-2.5 py-1 rounded bg-gold/5">PAGE 04 / 05</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Interactive 1st-Person Table HUD Wireframe (7 cols) -->
+                <div class="lg:col-span-7 flex flex-col justify-between bg-obsidian border border-gold/30 rounded-xl p-4 sm:p-5 relative overflow-hidden">
+                    <div class="flex flex-wrap items-center justify-between gap-2 mb-3">
+                        <span class="font-mono text-xs text-gold flex items-center gap-1.5">
+                            <i class="fa-solid fa-eye text-crimson-bright"></i>
+                            1ST-PERSON TABLE VIEWPORT MOCKUP (Cinemachine Camera Preview)
+                        </span>
+                        <!-- Camera State Switcher Buttons -->
+                        <div class="flex items-center gap-1 text-[11px] font-mono">
+                            <button onclick="setHudCameraMode('default')" id="cam-btn-default" class="px-2 py-1 rounded bg-gold text-obsidian font-bold">기본 착석</button>
+                            <button onclick="setHudCameraMode('zoom')" id="cam-btn-zoom" class="px-2 py-1 rounded bg-charcoal text-gray-300 border border-white/10 hover:text-white">극단적 클로즈업</button>
+                            <button onclick="setHudCameraMode('dutch')" id="cam-btn-dutch" class="px-2 py-1 rounded bg-charcoal text-gray-300 border border-white/10 hover:text-white">LIAR! 더치앵글</button>
+                        </div>
+                    </div>
+
+                    <!-- Simulated 16:9 1st-Person Viewport -->
+                    <div id="hud-viewport" class="relative w-full h-72 sm:h-80 rounded-xl bg-gradient-to-b from-[#13111c] via-[#1c1624] to-[#26171a] border border-white/15 p-4 flex flex-col justify-between overflow-hidden transition-all duration-500">
+                        <!-- Top Overhead Pendant Lamp Glow -->
+                        <div class="absolute -top-12 left-1/2 -translate-x-1/2 w-72 h-28 bg-gold/15 blur-2xl rounded-full pointer-events-none"></div>
+
+                        <!-- Top Bar: Diegetic Table Target Sign -->
+                        <div class="relative z-10 flex items-start justify-between">
+                            <div class="bg-obsidian/85 border border-gold/40 px-3 py-1.5 rounded-lg">
+                                <div class="text-[10px] font-mono text-gray-400">TABLE TARGET CARD</div>
+                                <div class="font-display font-bold text-gold text-sm">♠ KINGS TABLE</div>
+                            </div>
+
+                            <!-- Opponent Micro-Tell Callout -->
+                            <div id="hud-opponent-card" class="bg-obsidian/90 border border-crimson/50 px-3.5 py-2 rounded-lg text-center transition-transform duration-500">
+                                <div class="text-xs font-serifkr font-bold text-white flex items-center justify-center gap-1.5">
+                                    <i class="fa-solid fa-user-secret text-crimson-bright"></i>
+                                    상대방: 플레이어 #03 (카운터)
+                                </div>
+                                <div class="text-[11px] font-mono text-crimson-bright mt-0.5">
+                                    [관찰됨] 동공 지진 발생 / 호흡 불규칙 (142 BPM)
+                                </div>
+                            </div>
+
+                            <div class="bg-obsidian/85 border border-white/15 px-3 py-1.5 rounded-lg text-right font-mono">
+                                <div class="text-[10px] text-gray-400">ROUND POT DEBT</div>
+                                <div class="text-xs font-bold text-crimson-bright">- 4억 5,000만 원</div>
+                            </div>
+                        </div>
+
+                        <!-- Center Table Surface (Cards & Bell) -->
+                        <div class="relative z-10 my-auto flex items-center justify-center gap-6">
+                            <div class="w-16 h-22 py-3 px-2 rounded bg-charcoal/90 border border-gold/40 text-center shadow-lg transform -rotate-6">
+                                <div class="text-[10px] font-mono text-gray-400">SUBMITTED</div>
+                                <div class="text-lg font-display text-gold font-bold my-1">2장</div>
+                                <div class="text-[10px] text-white">"킹 2장이다"</div>
+                            </div>
+
+                            <div class="px-4 py-2 rounded-full bg-crimson/20 border border-crimson text-crimson-bright font-display font-bold text-xs tracking-wider shadow-lg">
+                                🔔 RING BELL : CALL "LIAR!"
+                            </div>
+                        </div>
+
+                        <!-- Bottom Diegetic Objects: Left Wrist Smartwatch + Center Hand Cards + Right Under-table Phone -->
+                        <div class="relative z-10 flex items-end justify-between gap-2 pt-2 border-t border-white/10">
+                            <!-- Left Wrist: Biometric Smartwatch (Diegetic UI) -->
+                            <div class="bg-obsidian/95 border border-gold/40 rounded-lg p-2.5 w-36">
+                                <div class="text-[9px] font-mono text-gold uppercase">DIEGETIC SMARTWATCH</div>
+                                <div class="flex items-center justify-between mt-1">
+                                    <span class="font-mono text-xs text-white font-bold">♥ 94 BPM</span>
+                                    <span class="font-mono text-[10px] text-crimson-bright">DEBT: -1.5억</span>
+                                </div>
+                            </div>
+
+                            <!-- Center: 1st Person Hand Cards -->
+                            <div class="flex items-center -space-x-2">
+                                <div class="w-11 h-16 rounded bg-parchment text-obsidian font-display font-bold text-xs flex flex-col justify-between p-1.5 border border-gold shadow transform -rotate-6">
+                                    <span>♠K</span><span class="self-end">♠</span>
+                                </div>
+                                <div class="w-11 h-16 rounded bg-parchment text-crimson font-display font-bold text-xs flex flex-col justify-between p-1.5 border border-gold shadow transform -translate-y-1">
+                                    <span>♥Q</span><span class="self-end">♥</span>
+                                </div>
+                                <div class="w-11 h-16 rounded bg-obsidian text-gold font-display font-bold text-xs flex flex-col justify-between p-1.5 border border-gold shadow transform rotate-6">
+                                    <span>👁</span><span class="text-[8px] font-mono">WATCH</span>
+                                </div>
+                            </div>
+
+                            <!-- Right: Under-Table Secret Messenger Phone -->
+                            <div class="bg-obsidian/95 border border-crimson/40 rounded-lg p-2.5 w-40">
+                                <div class="text-[9px] font-mono text-crimson-bright uppercase">SECRET DEAL PHONE</div>
+                                <div class="text-[11px] text-gray-300 truncate mt-0.5">"#02: 이번 턴 넘기면 5천만 양도"</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <p class="editable-field text-xs text-gray-400 mt-3">
+                        <strong class="text-gold">다이제틱 UI 철학:</strong> 화면을 가리는 2D 평면 체력바나 팝업창을 철저히 배제하고, 플레이어의 <strong>왼쪽 손목시계(심박수/부채)</strong>, <strong>테이블 위 황동 호출벨(LIAR 선언)</strong>, <strong>허벅지 위 스마트폰(비밀 밀약)</strong>으로 모든 정보를 몰입감 있게 전달합니다.
+                    </p>
+                </div>
+
+                <!-- Right Column: Unity Cinemachine & Audio/Shader Spec (5 cols) -->
+                <div class="lg:col-span-5 flex flex-col justify-between space-y-4">
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-5">
+                        <h3 class="font-serifkr font-bold text-gold text-base flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                            <i class="fa-solid fa-video text-crimson-bright"></i>
+                            Unity Cinemachine 카메라 연출 스펙
+                        </h3>
+                        <ul class="space-y-3 text-xs sm:text-sm text-gray-300">
+                            <li class="flex items-start gap-2.5">
+                                <span class="font-mono text-xs text-gold font-bold mt-0.5">VCam_01</span>
+                                <div class="editable-field">
+                                    <strong class="text-white">기본 테이블 뷰 (FOV 60°):</strong> 미세한 핸드헬드 노이즈(Perlin Noise 0.15)를 적용하여 지하 도박장의 숨 막히는 현장감 유지.
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="font-mono text-xs text-crimson-bright font-bold mt-0.5">VCam_02</span>
+                                <div class="editable-field">
+                                    <strong class="text-white">심리 탐색 줌인 (FOV 32°):</strong> 마우스 우클릭 시 상대방의 눈동자와 손끝으로 로우 앵글 포커스 전환 (Depth of Field 배경 흐림).
+                                </div>
+                            </li>
+                            <li class="flex items-start gap-2.5">
+                                <span class="font-mono text-xs text-gold font-bold mt-0.5">VCam_03</span>
+                                <div class="editable-field">
+                                    <strong class="text-white">'LIAR!' 콜 더치 앵글 (Roll ±14°):</strong> 황동 벨을 타격하는 순간 카메라 Z축을 14도 기울이고 Chromatic Aberration(색수차)을 0.8까지 급격히 증폭.
+                                </div>
+                            </li>
+                        </ul>
+                    </div>
+
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-5">
+                        <h3 class="font-serifkr font-bold text-gold text-base flex items-center gap-2 mb-3 border-b border-white/10 pb-2">
+                            <i class="fa-solid fa-volume-high text-crimson-bright"></i>
+                            사운드 &amp; URP 포스트 프로세싱 디렉션
+                        </h3>
+                        <div class="space-y-2.5 text-xs text-gray-300">
+                            <div class="editable-field p-2.5 rounded bg-charcoal border border-white/10">
+                                <strong class="text-crimson-bright">청각적 고립 (Low-Pass Filter):</strong> 내 심박수가 140 BPM을 넘기면 주변 재즈 음악과 타인의 목소리가 먹먹해지며 오직 자신의 심장 박동 소리와 리볼버 쇠 마찰음만 선명하게 출력.
+                            </div>
+                            <div class="editable-field p-2.5 rounded bg-charcoal border border-white/10">
+                                <strong class="text-gold">불발 격발 시 흑백 역전 (Invert Flash):</strong> 빈 약실이 '찰칵' 소리를 내며 생존할 때, 0.15초간 화면 채도를 완전히 빼고 이명(Tinnitus) 사운드 이펙트 재생.
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- =====================================================================
+             PAGE 5: UNITY TECH STACK, AI PERSONA & MILESTONE ROADMAP
+             ===================================================================== -->
+        <section class="gdd-page rounded-xl p-6 sm:p-10" data-page-index="4">
+            <!-- Section Header -->
+            <div class="flex items-center justify-between border-b border-gold/25 pb-3 mb-6">
+                <div>
+                    <span class="font-mono text-xs text-crimson-bright tracking-widest uppercase">SECTION 05 // UNITY ARCHITECTURE &amp; PRODUCTION ROADMAP</span>
+                    <h2 class="editable-field font-serifkr text-2xl sm:text-3xl font-bold text-white mt-0.5">유니티 시스템 아키텍처 &amp; 개발 마일스톤 체크리스트</h2>
+                </div>
+                <span class="font-mono text-xs text-gold border border-gold/30 px-2.5 py-1 rounded bg-gold/5">PAGE 05 / 05</span>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Left Column: Unity C# Module Architecture + AI Psychological Persona Matrix (7 cols) -->
+                <div class="lg:col-span-7 space-y-5">
+                    <!-- Core C# Modules -->
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-5">
+                        <h3 class="font-serifkr font-bold text-gold text-base flex items-center gap-2 mb-3">
+                            <i class="fa-brands fa-unity text-crimson-bright"></i>
+                            핵심 C# 매니저 및 네트워크 아키텍처
+                        </h3>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-xs">
+                            <div class="p-3 rounded-lg bg-charcoal border border-white/10">
+                                <div class="font-mono text-gold font-bold mb-1">TurnStateMachine.cs</div>
+                                <p class="editable-field text-gray-400">Deal → SecretDeal → Declare → Observe → CallOrPass → RouletteResolution 6단계 상태 패턴 제어.</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-charcoal border border-white/10">
+                                <div class="font-mono text-crimson-bright font-bold mb-1">BiometricTellController.cs</div>
+                                <p class="editable-field text-gray-400">실시간 BPM 수치를 Animator IK(손 떨림), 눈 깜빡임 주기, AudioMixer 파라미터에 동기화.</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-charcoal border border-white/10">
+                                <div class="font-mono text-gold font-bold mb-1">CardDeckNetManager.cs</div>
+                                <p class="editable-field text-gray-400">Netcode for GameObjects(NGO) + Steamworks P2P 기반 서버 권한 덱 셔플 및 호스트 패킷 암호화(치트 방지).</p>
+                            </div>
+                            <div class="p-3 rounded-lg bg-charcoal border border-white/10">
+                                <div class="font-mono text-crimson-bright font-bold mb-1">SyndicateDealSystem.cs</div>
+                                <p class="editable-field text-gray-400">1:1 비밀 칩 양도 계약 생성, 이행 여부 검증 및 배신 시 부채 강제 이관 이벤트 처리.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- AI Opponent Psychological Persona Matrix -->
+                    <div class="bg-obsidian/80 border border-white/10 rounded-xl p-5">
+                        <div class="flex items-center justify-between mb-3">
+                            <h3 class="font-serifkr font-bold text-gold text-base flex items-center gap-2">
+                                <i class="fa-solid fa-brain text-crimson-bright"></i>
+                                싱글/빈자리 대응 AI 심리 페르소나 가중치 테이블
+                            </h3>
+                            <span class="font-mono text-[11px] text-gray-400">Utility AI Scoring</span>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-xs border-collapse">
+                                <thead>
+                                    <tr class="border-b border-white/15 text-gray-400 font-mono text-left">
+                                        <th class="py-2">AI 페르소나 유형</th>
+                                        <th class="py-2">블러핑 빈도</th>
+                                        <th class="py-2">'LIAR!' 콜 민감도</th>
+                                        <th class="py-2">특수 심리전 패턴</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-white/10 text-gray-300">
+                                    <tr>
+                                        <td class="editable-field py-2.5 font-bold text-crimson-bright">광기의 블러퍼 (Viper)</td>
+                                        <td class="editable-field py-2.5 font-mono">78% (매우 높음)</td>
+                                        <td class="editable-field py-2.5 font-mono">낮음 (공격적 패스)</td>
+                                        <td class="editable-field py-2.5">진실 패를 낼 때도 일부러 가짜 심박수를 높여 유인</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="editable-field py-2.5 font-bold text-gold">냉혹한 카운터 (Akiyama)</td>
+                                        <td class="editable-field py-2.5 font-mono">30% (계산적)</td>
+                                        <td class="editable-field py-2.5 font-mono">매우 높음 (확률 기반)</td>
+                                        <td class="editable-field py-2.5">이전 턴 제출 장수를 완벽 카운팅하여 불가능한 선언 즉시 적발</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="editable-field py-2.5 font-bold text-white">기회주의 배신자 (Rat)</td>
+                                        <td class="editable-field py-2.5 font-mono">50% (유동적)</td>
+                                        <td class="editable-field py-2.5 font-mono">중간 (타겟 집중)</td>
+                                        <td class="editable-field py-2.5">비밀 밀약을 먼저 제안한 뒤 결정적 순간 이중 계약서로 배신</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Interactive Production Milestone Checklist (5 cols) -->
+                <div class="lg:col-span-5 bg-obsidian/80 border border-gold/30 rounded-xl p-5 flex flex-col justify-between">
+                    <div>
+                        <div class="flex items-center justify-between border-b border-white/10 pb-3 mb-4">
+                            <div>
+                                <span class="text-[10px] font-mono text-gold uppercase">INTERACTIVE MILESTONE TRACKER</span>
+                                <h3 class="font-serifkr font-bold text-white text-base">개발 로드맵 &amp; 마일스톤</h3>
+                            </div>
+                            <div class="text-right font-mono">
+                                <span id="milestone-percent" class="text-lg font-bold text-crimson-bright">40%</span>
+                                <span class="text-[10px] text-gray-400 block">PROGRESS</span>
+                            </div>
+                        </div>
+
+                        <!-- Progress Bar -->
+                        <div class="w-full h-2 bg-charcoal rounded-full overflow-hidden mb-4 border border-white/10">
+                            <div id="milestone-bar" class="h-full bg-gradient-to-r from-crimson to-gold transition-all duration-300" style="width: 40%;"></div>
+                        </div>
+
+                        <!-- Checklist Items -->
+                        <div class="space-y-2.5 text-xs" id="milestone-list">
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-charcoal/80 border border-white/10 cursor-pointer hover:border-gold/40 transition">
+                                <input type="checkbox" checked onchange="updateMilestoneProgress()" class="milestone-check accent-crimson mt-0.5 w-4 h-4">
+                                <span class="editable-field text-gray-200"><strong class="text-gold">[M1. 코어 프로토타입]</strong> 4인 테이블 턴제 FSM, 기본 20장 딜링 및 1/6 리볼버 확률 엔진 구현</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-charcoal/80 border border-white/10 cursor-pointer hover:border-gold/40 transition">
+                                <input type="checkbox" checked onchange="updateMilestoneProgress()" class="milestone-check accent-crimson mt-0.5 w-4 h-4">
+                                <span class="editable-field text-gray-200"><strong class="text-gold">[M2. 카메라 &amp; 다이제틱 HUD]</strong> Cinemachine VCam 전환 및 손목시계 심박수/부채 UI 연동</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-charcoal/80 border border-white/10 cursor-pointer hover:border-gold/40 transition">
+                                <input type="checkbox" onchange="updateMilestoneProgress()" class="milestone-check accent-crimson mt-0.5 w-4 h-4">
+                                <span class="editable-field text-gray-200"><strong class="text-crimson-bright">[M3. 라이어 게임 심화 시스템]</strong> 전술 카드(감시자의 눈/이중 계약서) 및 스마트폰 비밀 밀약 메신저 구현</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-charcoal/80 border border-white/10 cursor-pointer hover:border-gold/40 transition">
+                                <input type="checkbox" onchange="updateMilestoneProgress()" class="milestone-check accent-crimson mt-0.5 w-4 h-4">
+                                <span class="editable-field text-gray-200"><strong class="text-crimson-bright">[M4. 마이크로 텔 &amp; AI 봇]</strong> 캐릭터 시선 회피/동공 떨림 셰이더 및 3종 AI 페르소나 탑재</span>
+                            </label>
+                            <label class="flex items-start gap-2.5 p-2.5 rounded-lg bg-charcoal/80 border border-white/10 cursor-pointer hover:border-gold/40 transition">
+                                <input type="checkbox" onchange="updateMilestoneProgress()" class="milestone-check accent-crimson mt-0.5 w-4 h-4">
+                                <span class="editable-field text-gray-200"><strong class="text-white">[M5. 스팀 멀티플레이 &amp; 폴리싱]</strong> Steamworks 로비 연동, 보이스챗 필터 및 사운드 마스터링</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Footer Sign-off Box -->
+                    <div class="mt-4 pt-3 border-t border-white/10 flex items-center justify-between text-[11px] font-mono text-gray-400">
+                        <span>APPROVED BY: LEAD GAME DESIGNER</span>
+                        <span class="text-gold">SYNDICATE SEAL ♠</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Custom Modal Notification (Never uses alert()) -->
+    <div id="custom-toast" class="no-print fixed bottom-5 right-5 z-50 hidden max-w-sm bg-charcoal border-2 border-gold text-white px-4 py-3 rounded-xl shadow-2xl flex items-center gap-3">
+        <i class="fa-solid fa-circle-check text-gold text-lg"></i>
+        <div id="custom-toast-msg" class="text-xs sm:text-sm">알림 메시지</div>
+    </div>
+
+    <script>
+        // --- State Variables ---
+        let isEditMode = false;
+        let isSlideView = false;
+        let currentSlideIndex = 0;
+
+        // Roulette & BPM Simulator State
+        let simChamberShotCount = 0;
+        let liveBulletIndex = Math.floor(Math.random() * 6);
+        let simIsDead = false;
+        let cylinderRotationDeg = 0;
+
+        // Show custom non-blocking toast message
+        function showToast(message) {
+            const toast = document.getElementById('custom-toast');
+            const msgEl = document.getElementById('custom-toast-msg');
+            msgEl.textContent = message;
+            toast.classList.remove('hidden');
+            clearTimeout(window.toastTimer);
+            window.toastTimer = setTimeout(() => {
+                toast.classList.add('hidden');
+            }, 3200);
+        }
+
+        // 1. Toggle ContentEditable Mode across all '.editable-field' elements
+        function toggleEditMode() {
+            isEditMode = !isEditMode;
+            const editableNodes = document.querySelectorAll('.editable-field');
+            const editBtnLabel = document.getElementById('edit-mode-label');
+            const helperBanner = document.getElementById('edit-helper-banner');
+
+            editableNodes.forEach(node => {
+                node.setAttribute('contenteditable', isEditMode ? 'true' : 'false');
+            });
+
+            if (isEditMode) {
+                document.body.classList.add('edit-mode-active');
+                editBtnLabel.textContent = '편집 완료 (잠금)';
+                helperBanner.classList.remove('hidden');
+                showToast('편집 모드가 켜졌습니다. 원하는 텍스트를 클릭해 바로 수정하세요.');
+            } else {
+                document.body.classList.remove('edit-mode-active');
+                editBtnLabel.textContent = '편집 모드 켜기';
+                helperBanner.classList.add('hidden');
+                saveEditsToLocal();
+                showToast('수정한 기획서 텍스트가 브라우저에 자동 저장되었습니다.');
+            }
+        }
+
+        // Save & Load Custom Edits via LocalStorage
+        function saveEditsToLocal() {
+            try {
+                const editableNodes = document.querySelectorAll('.editable-field');
+                const savedContent = Array.from(editableNodes).map(n => n.innerHTML);
+                localStorage.setItem('liars_gambit_gdd_edits', JSON.stringify(savedContent));
+            } catch (e) {
+                console.warn('LocalStorage 저장 생략:', e);
+            }
+        }
+
+        function loadEditsFromLocal() {
+            try {
+                const raw = localStorage.getItem('liars_gambit_gdd_edits');
+                if (!raw) return;
+                const savedContent = JSON.parse(raw);
+                const editableNodes = document.querySelectorAll('.editable-field');
+                editableNodes.forEach((node, idx) => {
+                    if (savedContent[idx] !== undefined) {
+                        node.innerHTML = savedContent[idx];
+                    }
+                });
+            } catch (e) {
+                console.warn('LocalStorage 로드 생략:', e);
+            }
+        }
+
+        function resetCustomEdits() {
+            try {
+                localStorage.removeItem('liars_gambit_gdd_edits');
+                window.location.reload();
+            } catch (e) {
+                window.location.reload();
+            }
+        }
+
+        // 2. Toggle Document Scroll View vs Presentation Slide View
+        function toggleViewMode() {
+            isSlideView = !isSlideView;
+            const label = document.getElementById('view-mode-label');
+            if (isSlideView) {
+                document.body.classList.add('slide-view-mode');
+                label.textContent = '전체 문서 뷰';
+                switchPage(currentSlideIndex);
+                showToast('슬라이드 발표 뷰로 전환되었습니다. 상단 번호나 좌우 화살표 키로 이동하세요.');
+            } else {
+                document.body.classList.remove('slide-view-mode');
+                label.textContent = '슬라이드 뷰';
+                showToast('전체 스크롤 문서 뷰로 전환되었습니다.');
+            }
+        }
+
+        function switchPage(pageIndex) {
+            currentSlideIndex = pageIndex;
+            const pages = document.querySelectorAll('.gdd-page');
+            const navBtns = document.querySelectorAll('.page-nav-btn');
+
+            pages.forEach((page, idx) => {
+                if (idx === pageIndex) {
+                    page.classList.add('active-slide');
+                } else {
+                    page.classList.remove('active-slide');
+                }
+            });
+
+            navBtns.forEach((btn, idx) => {
+                if (idx === pageIndex) {
+                    btn.className = 'page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition bg-crimson text-white font-semibold';
+                } else {
+                    btn.className = 'page-nav-btn px-2.5 py-1 rounded text-xs font-mono transition text-gray-400 hover:text-white';
+                }
+            });
+
+            if (!isSlideView && pages[pageIndex]) {
+                pages[pageIndex].scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        }
+
+        // Keyboard Arrow Support for Slide View
+        window.addEventListener('keydown', (e) => {
+            if (!isSlideView || isEditMode) return;
+            if (e.key === 'ArrowRight') {
+                switchPage((currentSlideIndex + 1) % 5);
+            } else if (e.key === 'ArrowLeft') {
+                switchPage((currentSlideIndex - 1 + 5) % 5);
+            }
+        });
+
+        // 3. Print / Export PDF Optimization Handler
+        function triggerPrintPDF() {
+            if (isEditMode) {
+                toggleEditMode();
+            }
+            window.print();
+        }
+
+        // 4. Psychological Roulette & Heartbeat Simulator Logic
+        function updateSimulatorMetrics() {
+            if (simIsDead) return;
+
+            const isBluff = document.getElementById('sim-bluff-toggle').checked;
+            const isFakePulse = document.getElementById('sim-fake-toggle').checked;
+
+            const remainingChambers = Math.max(1, 6 - simChamberShotCount);
+            const liveProbability = (1 / remainingChambers) * 100;
+
+            // Calculate simulated BPM
+            let bpm = 74 + Math.round((simChamberShotCount / 6) * 52);
+            if (isBluff) bpm += 26;
+            if (isFakePulse) bpm += 38;
+
+            document.getElementById('sim-chamber-text').textContent = `${simChamberShotCount} / 6`;
+            document.getElementById('sim-prob-text').textContent = `실탄 확률 ${liveProbability.toFixed(1)}%`;
+            document.getElementById('sim-bpm-value').textContent = bpm;
+
+            const statusEl = document.getElementById('sim-tell-status');
+            if (bpm >= 145) {
+                statusEl.textContent = '극도의 공포 / 손 떨림 & 시선 회피 노출!';
+                statusEl.className = 'text-crimson-bright font-bold mt-0.5';
+                document.body.classList.add('tension-high');
+            } else if (bpm >= 110) {
+                statusEl.textContent = '주의: 호흡 가빠짐 및 미세 동공 흔들림';
+                statusEl.className = 'text-gold-light font-semibold mt-0.5';
+                document.body.classList.remove('tension-high');
+            } else {
+                statusEl.textContent = '안정됨 (포커페이스 유지 중)';
+                statusEl.className = 'text-gold font-semibold mt-0.5';
+                document.body.classList.remove('tension-high');
+            }
+        }
+
+        function pullSimulatorTrigger() {
+            if (simIsDead) {
+                resetSimulator();
+                return;
+            }
+
+            const logBox = document.getElementById('sim-log-box');
+            const currentChamberEl = document.getElementById(`chamber-${simChamberShotCount}`);
+
+            // Rotate Revolver Cylinder SVG
+            cylinderRotationDeg += 60;
+            document.getElementById('revolver-svg').style.transform = `rotate(${cylinderRotationDeg}deg)`;
+
+            if (simChamberShotCount === liveBulletIndex) {
+                // BANG! Live round hit
+                simIsDead = true;
+                if (currentChamberEl) {
+                    currentChamberEl.setAttribute('fill', '#e03131');
+                    currentChamberEl.setAttribute('stroke', '#ffffff');
+                }
+                document.getElementById('sim-bpm-value').textContent = '0';
+                document.getElementById('sim-tell-status').textContent = '사망 (ELIMINATED - 부채 강제 정산)';
+                document.getElementById('sim-tell-status').className = 'text-crimson-bright font-bold mt-0.5';
+                document.getElementById('sim-trigger-btn').innerHTML = '<i class="fa-solid fa-rotate-right"></i> <span>사망 판정 — 클릭하여 새 실린더 장전</span>';
+                logBox.textContent = `💥 [격발! ${simChamberShotCount + 1}/6 약실] 실탄이 발사되었습니다! 블러핑 패배 처벌 완료.`;
+                logBox.className = 'mt-2.5 text-center font-mono text-xs py-1.5 px-3 rounded bg-crimson/30 border border-crimson text-white font-bold';
+                document.body.classList.add('tension-high');
+            } else {
+                // CLICK! Empty chamber survived
+                if (currentChamberEl) {
+                    currentChamberEl.setAttribute('fill', '#3b3b4f');
+                }
+                simChamberShotCount++;
+                updateSimulatorMetrics();
+                logBox.textContent = `🔔 [찰칵! ${simChamberShotCount}/6 약실 생존] 빈 약실이었습니다. 다음 격발 실탄 확률이 급증합니다.`;
+                logBox.className = 'mt-2.5 text-center font-mono text-xs py-1.5 px-3 rounded bg-obsidian border border-gold/40 text-gold-light';
+            }
+        }
+
+        function resetSimulator() {
+            simChamberShotCount = 0;
+            liveBulletIndex = Math.floor(Math.random() * 6);
+            simIsDead = false;
+            cylinderRotationDeg = 0;
+            document.getElementById('revolver-svg').style.transform = 'rotate(0deg)';
+
+            for (let i = 0; i < 6; i++) {
+                const el = document.getElementById(`chamber-${i}`);
+                if (el) {
+                    el.setAttribute('fill', '#0b0b0e');
+                    el.setAttribute('stroke', '#8a7122');
+                }
+            }
+
+            document.getElementById('sim-trigger-btn').innerHTML = '<i class="fa-solid fa-crosshairs"></i> <span>처벌 룰렛 방아쇠 당기기 (PULL TRIGGER)</span>';
+            const logBox = document.getElementById('sim-log-box');
+            logBox.textContent = '[실린더 재장전 완료] 무작위 약실(1/6)에 실탄 1발이 장전되었습니다.';
+            logBox.className = 'mt-2.5 text-center font-mono text-xs py-1.5 px-3 rounded bg-obsidian border border-white/10 text-gray-300';
+            document.body.classList.remove('tension-high');
+            updateSimulatorMetrics();
+        }
+
+        // 5. 1st-Person Diegetic HUD Camera Mode Preview Switcher
+        function setHudCameraMode(mode) {
+            const viewport = document.getElementById('hud-viewport');
+            const opponentCard = document.getElementById('hud-opponent-card');
+            const btnDefault = document.getElementById('cam-btn-default');
+            const btnZoom = document.getElementById('cam-btn-zoom');
+            const btnDutch = document.getElementById('cam-btn-dutch');
+
+            // Reset button styles
+            [btnDefault, btnZoom, btnDutch].forEach(b => {
+                b.className = 'px-2 py-1 rounded bg-charcoal text-gray-300 border border-white/10 hover:text-white';
+            });
+
+            if (mode === 'default') {
+                btnDefault.className = 'px-2 py-1 rounded bg-gold text-obsidian font-bold';
+                viewport.style.transform = 'scale(1) rotate(0deg)';
+                opponentCard.style.transform = 'scale(1)';
+            } else if (mode === 'zoom') {
+                btnZoom.className = 'px-2 py-1 rounded bg-crimson text-white font-bold';
+                viewport.style.transform = 'scale(1.04) rotate(0deg)';
+                opponentCard.style.transform = 'scale(1.18) translateY(6px)';
+            } else if (mode === 'dutch') {
+                btnDutch.className = 'px-2 py-1 rounded bg-crimson text-white font-bold';
+                viewport.style.transform = 'scale(1.03) rotate(-3.5deg)';
+                opponentCard.style.transform = 'scale(1.1)';
+            }
+        }
+
+        // 6. Milestone Progress Bar Updater
+        function updateMilestoneProgress() {
+            const checks = document.querySelectorAll('.milestone-check');
+            const total = checks.length;
+            let checkedCount = 0;
+            checks.forEach(c => { if (c.checked) checkedCount++; });
+            const pct = Math.round((checkedCount / total) * 100);
+            document.getElementById('milestone-percent').textContent = `${pct}%`;
+            document.getElementById('milestone-bar').style.width = `${pct}%`;
+        }
+
+        // Initialize on Window Load
+        window.onload = function () {
+            loadEditsFromLocal();
+            updateSimulatorMetrics();
+            updateMilestoneProgress();
+        };
+    </script>
+    <a href="../전시관 2/index.html#work-4" style="position:fixed;bottom:22px;left:22px;z-index:10001;padding:10px 18px;border-radius:999px;background:rgba(12,10,16,0.88);border:1px solid #d9b471;color:#fff4dc;font-family:sans-serif;font-size:12px;font-weight:600;text-decoration:none;box-shadow:0 8px 24px rgba(0,0,0,0.65);backdrop-filter:blur(10px);">← 인덕 전시장 (전시관 2) 액자 #04 로 돌아가기</a>
+</body>
+</html>

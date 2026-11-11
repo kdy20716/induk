@@ -1,0 +1,72 @@
+// 전시 작품 데이터 — 액자 순서대로 배치됩니다.
+// url: 액자 클릭(마리오64 워프) 후 이동할 페이지 (index.html 기준 상대경로)
+export const WORKS = [
+  {
+    id: 'malang-blast',
+    no: '01',
+    title: '말랑블라스트',
+    en: 'MALANG BLAST',
+    genre: 'Mobile Casual Puzzle · Unity',
+    tags: ['Unity', '8×8 Puzzle', 'Time Attack', 'Antigravity MCP'],
+    desc: '블록블라스트의 8×8 콤보 룰에 말랑이(Squishy) 감성을 더한 모바일 캐주얼 퍼즐. 타이머 게이지와 SPIN / SKIP 아이템으로 속도감과 전략성을 강화했습니다.',
+    image: 'assets/images/graphic.png',
+    url: 'subpages/malang-blast.html',
+    accent: '#ff8fc7',
+  },
+  {
+    id: 'liars-bar',
+    no: '02',
+    title: '라이어스 바 : 데스 테이블',
+    en: "LIAR'S BAR · DEATH TABLE",
+    genre: '1st-Person Bluffing Death Game · Unity 6 HDRP',
+    tags: ['Unity 6 HDRP', 'Procedural IK', 'Unity MCP'],
+    desc: '지하 스피크이지 바의 원형 테이블 위, 덱 심리전과 러시안 룰렛을 결합한 1인칭 서스펜스 데스게임 프로토타입.',
+    image: 'assets/images/liarsbar_shot_07_table_view.png',
+    url: 'subpages/liars-bar.html',
+    accent: '#ff7a3d',
+  },
+  {
+    id: 'silent-trigger',
+    no: '03',
+    title: '사일런트 트리거',
+    en: 'SILENT TRIGGER',
+    genre: 'Psychological Survival · Interactive Web',
+    tags: ['Web Audio API', 'Heartbeat Sound', 'Interactive Web'],
+    desc: '침묵의 방아쇠 : 심리전 서바이벌. 스크롤할수록 심박수가 상승하고 테이블 위의 거짓말이 드러나는 인터랙티브 웹 경험 (전시관 1).',
+    image: 'assets/images/silent_trigger_crop.png',
+    url: '../전시관 1/index.html',
+    accent: '#ff2a2a',
+  },
+  {
+    id: 'liars-gambit',
+    no: '04',
+    title: '라이어스 갬빗',
+    en: "LIAR'S GAMBIT",
+    genre: 'Game Design Document · Pitch Deck',
+    tags: ['Unity 6 URP', 'GDD', 'Interactive Pitch Deck'],
+    desc: '더 블러드 컨트랙트 — Liar\'s Bar의 러시안 룰렛과 라이어 게임의 필승 심리전을 결합한 하이-스테이크 블러핑 서바이벌 기획서.',
+    image: 'assets/images/liars_gambit.png',
+    url: '../전시관 1/liar_s_gambit_interactive_gdd_pitch_deck.html',
+    accent: '#d9a441',
+  },
+  {
+    id: 'artwork',
+    no: '05',
+    title: '말랑 월드 아트 & 모션',
+    en: 'ART & MOTION WORKS',
+    genre: 'Graphic · Motion · Branding',
+    tags: ['Key Art', 'Motion Clip', 'Logo / Icon'],
+    desc: '말랑블라스트 세계관 키아트, 시네마틱 모션 클립, 앱 아이콘과 스튜디오 로고 등 그래픽 작업 모음.',
+    image: 'assets/images/mallang_shot.png',
+    url: 'subpages/artwork.html',
+    accent: '#9fd8ff',
+  },
+];
+
+// 빔프로젝터 쇼릴 재생 목록
+export const SHOWREEL = [
+  { src: 'assets/videos/mallang_1min.mp4', title: '말랑블라스트 — 1분 소개 영상' },
+  { src: 'assets/videos/mallang_clip1.mp4', title: 'Malang World — Flying to the Village' },
+  { src: 'assets/videos/mallang_clip2.mp4', title: 'Malang World — Colorful Figures' },
+  { src: 'assets/videos/mallang_clip3.mp4', title: 'Malang World — Into the Sky' },
+];
