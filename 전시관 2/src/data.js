@@ -1,72 +1,52 @@
-// 전시 작품 데이터 — 액자 순서대로 배치됩니다.
-// url: 액자 클릭(마리오64 워프) 후 이동할 페이지 (index.html 기준 상대경로)
-export const WORKS = [
-  {
-    id: 'malang-blast',
-    no: '01',
-    title: '말랑블라스트',
-    en: 'MALANG BLAST',
-    genre: 'Mobile Casual Puzzle · Unity',
-    tags: ['Unity', '8×8 Puzzle', 'Time Attack', 'Antigravity MCP'],
-    desc: '블록블라스트의 8×8 콤보 룰에 말랑이(Squishy) 감성을 더한 모바일 캐주얼 퍼즐. 타이머 게이지와 SPIN / SKIP 아이템으로 속도감과 전략성을 강화했습니다.',
-    image: 'assets/images/graphic.png',
-    url: 'subpages/malang-blast.html',
-    accent: '#ff8fc7',
-  },
-  {
-    id: 'liars-bar',
-    no: '02',
-    title: '라이어스 바 : 데스 테이블',
-    en: "LIAR'S BAR · DEATH TABLE",
-    genre: '1st-Person Bluffing Death Game · Unity 6 HDRP',
-    tags: ['Unity 6 HDRP', 'Procedural IK', 'Unity MCP'],
-    desc: '지하 스피크이지 바의 원형 테이블 위, 덱 심리전과 러시안 룰렛을 결합한 1인칭 서스펜스 데스게임 프로토타입.',
-    image: 'assets/images/liarsbar_shot_07_table_view.png',
-    url: 'subpages/liars-bar.html',
-    accent: '#ff7a3d',
-  },
-  {
-    id: 'silent-trigger',
-    no: '03',
-    title: '사일런트 트리거',
-    en: 'SILENT TRIGGER',
-    genre: 'Psychological Survival · Interactive Web',
-    tags: ['Web Audio API', 'Heartbeat Sound', 'Interactive Web'],
-    desc: '침묵의 방아쇠 : 심리전 서바이벌. 스크롤할수록 심박수가 상승하고 테이블 위의 거짓말이 드러나는 인터랙티브 웹 경험 (전시관 1).',
-    image: 'assets/images/silent_trigger_crop.png',
-    url: '../전시관 1/index.html',
-    accent: '#ff2a2a',
-  },
-  {
-    id: 'liars-gambit',
-    no: '04',
-    title: '라이어스 갬빗',
-    en: "LIAR'S GAMBIT",
-    genre: 'Game Design Document · Pitch Deck',
-    tags: ['Unity 6 URP', 'GDD', 'Interactive Pitch Deck'],
-    desc: '더 블러드 컨트랙트 — Liar\'s Bar의 러시안 룰렛과 라이어 게임의 필승 심리전을 결합한 하이-스테이크 블러핑 서바이벌 기획서.',
-    image: 'assets/images/liars_gambit.png',
-    url: '../전시관 1/liar_s_gambit_interactive_gdd_pitch_deck.html',
-    accent: '#d9a441',
-  },
-  {
-    id: 'artwork',
-    no: '05',
-    title: '말랑 월드 아트 & 모션',
-    en: 'ART & MOTION WORKS',
-    genre: 'Graphic · Motion · Branding',
-    tags: ['Key Art', 'Motion Clip', 'Logo / Icon'],
-    desc: '말랑블라스트 세계관 키아트, 시네마틱 모션 클립, 앱 아이콘과 스튜디오 로고 등 그래픽 작업 모음.',
-    image: 'assets/images/mallang_shot.png',
-    url: 'subpages/artwork.html',
-    accent: '#9fd8ff',
-  },
+// =====================================================================
+//  전시 작품 데이터 — 갤러리 액자 순서대로 배치됩니다.
+//  지금은 학생 작품이 없어서 임시 그림(코드로 그린 유화 풍 그림)과
+//  "작품 예시 페이지(subpages/work.html?no=번호)"로 통일해 두었습니다.
+//
+//  ▶ 학생 작품으로 바꿀 때는 아래 PLACEHOLDER 대신 이렇게 적으면 됩니다.
+//    {
+//      title: '작품 제목', en: 'ENGLISH TITLE', student: '홍길동', major: '게임&VR콘텐츠디자인과',
+//      genre: 'Unity · 3D Action', tags: ['Unity', 'Blender'],
+//      desc: '작품 설명 한두 문장',
+//      image: 'assets/works/01.jpg',   // 액자에 걸릴 대표 이미지 (없으면 임시 그림)
+//      video: 'assets/works/01.mp4',   // 작품 페이지에 들어갈 영상 (선택)
+//    },
+// =====================================================================
+
+const WORK_COUNT = 12;
+
+const PLACEHOLDER = (n) => ({
+  title: `작품 제목 ${n}`,
+  en: `UNTITLED WORK No.${n}`,
+  student: '학생 이름',
+  major: '인덕대학교 졸업 작품',
+  genre: 'Graduation Work · 2026',
+  tags: ['Game', 'Media Art', 'Interactive'],
+  desc: '학생 작품이 등록되면 이곳에 작품 소개가 표시됩니다. 액자를 클릭하면 작품 상세 페이지로 이동합니다.',
+  image: null,
+  video: null,
+});
+
+const ENTRIES = [
+  // 학생 작품이 정해지면 여기에 순서대로 넣으세요. 비어 있는 자리는 임시 작품으로 채워집니다.
 ];
 
-// 빔프로젝터 쇼릴 재생 목록
+export const WORKS = Array.from({ length: WORK_COUNT }, (_, i) => {
+  const n = String(i + 1).padStart(2, '0');
+  return {
+    ...PLACEHOLDER(n),
+    ...(ENTRIES[i] || {}),
+    no: n,
+    index: i,
+    url: `subpages/work.html?no=${n}`,
+    accent: '#d9b471',
+  };
+});
+
+// 로비 영상 액자에서 재생할 목록
 export const SHOWREEL = [
-  { src: 'assets/videos/mallang_1min.mp4', title: '말랑블라스트 — 1분 소개 영상' },
-  { src: 'assets/videos/mallang_clip1.mp4', title: 'Malang World — Flying to the Village' },
-  { src: 'assets/videos/mallang_clip2.mp4', title: 'Malang World — Colorful Figures' },
-  { src: 'assets/videos/mallang_clip3.mp4', title: 'Malang World — Into the Sky' },
+  { src: 'assets/videos/mallang_1min.mp4', title: '전시 소개 영상 01' },
+  { src: 'assets/videos/mallang_clip1.mp4', title: '전시 소개 영상 02' },
+  { src: 'assets/videos/mallang_clip2.mp4', title: '전시 소개 영상 03' },
+  { src: 'assets/videos/mallang_clip3.mp4', title: '전시 소개 영상 04' },
 ];

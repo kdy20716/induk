@@ -1,35 +1,41 @@
 import * as THREE from 'three';
-import { Reflector } from 'three/addons/objects/Reflector.js';
-import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
-import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
-import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js';
-import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
 import { DRACOLoader } from 'three/addons/loaders/DRACOLoader.js';
 
 import { WORKS, SHOWREEL } from './data.js';
-import { createPaintingMaterial, createBeamGeometry, createBeamMaterial, createDustMaterial, createGlowTexture } from './shaders.js';
-import { textSign, plaqueTexture, noiseTexture, woodTexture, doorTextures, FONTS } from './textures.js';
+import { createPaintingMaterial } from './shaders.js';
+import {
+  textSign, plaqueTexture, woodTexture, FONTS,
+  marbleFloorTexture, plasterTexture, damaskTexture, cofferTexture, classicDoorTexture,
+} from './textures.js';
+import { paintPlaceholder } from './paintings.js';
 import { ExhibitionAudio } from './audio.js';
 
 /* =====================================================================
- *  상수 & 레이아웃
+ *  고전 미술관 레이아웃
+ *  - 로비(대리석 홀) → 영상 액자 → 갤러리 대문 → 작품 회랑(양쪽 벽) → 엔딩
+ *  - 반사 바닥 / 블룸 / 빔 광선 같은 눈부신 효과는 모두 제거했습니다.
  * ===================================================================== */
-const LOBBY = { x: 12, zBack: -14, zFront: 16, h: 9 };
-const HALL = { x: 5, zStart: -14.3, zEnd: -55, h: 6.4 };
-const DOOR = { w: 5, h: 6 };
-const SCREEN = { w: 16.0, h: 9.0, top: 8.8, z: -13.35 };
-const PROJ = { pos: new THREE.Vector3(0, 8.4, 5.5) };
-const FRAME_Z = (i) => -21 - i * 7;
+const LOBBY = { x: 11, zBack: -12, zFront: 14, h: 8 };
+const DOOR = { w: 4.4, h: 5.6 };
+const PAIR_GAP = 7.2;
+const PAIRS = Math.ceil(WORKS.length / 2);
+const HALL = { x: 6, zStart: LOBBY.zBack - 0.3, h: 6.2 };
+HALL.firstZ = HALL.zStart - 6.2;
+HALL.zEnd = HALL.firstZ - (PAIRS - 1) * PAIR_GAP - 8.5;
+const FRAME_Y = 2.6;
+const FRAME_Z = (i) => HALL.firstZ - Math.floor(i / 2) * PAIR_GAP;
 const FRAME_SIDE = (i) => (i % 2 === 0 ? -1 : 1); // -1 = 왼쪽 벽, +1 = 오른쪽 벽
+
+const VIDEO = { w: 6.4, h: 3.6, y: 3.7, z: -3.8 }; // 로비 왼쪽 벽 영상 액자
 const STOP_FIRST_WORK = 3;
 const MAX_STOP = STOP_FIRST_WORK + WORKS.length; // 마지막 = 엔딩
 
 const CHAPTERS = [
-  { label: 'LOBBY', ko: '전시장 로비' },
-  { label: 'SHOWREEL', ko: '작품 영상관' },
-  { label: 'THE GATE', ko: '갤러리 입구' },
+  { label: 'LOBBY', ko: '중앙 홀' },
+  { label: 'FILM', ko: '전시 영상' },
+  { label: 'GALLERY', ko: '갤러리 입구' },
   ...WORKS.map((w) => ({ label: `No.${w.no}`, ko: w.title })),
   { label: 'FIN', ko: '관람 종료' },
 ];
@@ -66,33 +72,30 @@ const ui = {
   nowPlaying: $('#nowPlaying'),
   stopLabel: $('#stopLabel'),
 };
+const finale = $('#finaleCaption');
+if (finale) finale.dataset.stop = String(MAX_STOP);
 
 /* =====================================================================
- *  렌더러 / 씬 / 카메라
+ *  렌더러 / 씬 / 카메라 (후처리 없음 → 번짐·깨짐 없는 선명한 화면)
  * ===================================================================== */
 const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, powerPreference: 'high-performance' });
-const PR = Math.min(window.devicePixelRatio, 1.75);
+const PR = Math.min(window.devicePixelRatio, 1.5);
 renderer.setPixelRatio(PR);
 renderer.setSize(innerWidth, innerHeight);
 renderer.toneMapping = THREE.ACESFilmicToneMapping;
-renderer.toneMappingExposure = 1.05;
+renderer.toneMappingExposure = 1.0;
 renderer.outputColorSpace = THREE.SRGBColorSpace;
 
 const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x050608);
-scene.fog = new THREE.FogExp2(0x050608, 0.012);
+scene.background = new THREE.Color(0x1a1612);
+scene.fog = new THREE.Fog(0x1a1612, 38, 95);
 
-const camera = new THREE.PerspectiveCamera(42, innerWidth / innerHeight, 0.05, 200);
+const camera = new THREE.PerspectiveCamera(45, innerWidth / innerHeight, 0.05, 160);
 camera.rotation.order = 'YXZ';
+const BASE_FOV = 45;
 
 const pmrem = new THREE.PMREMGenerator(renderer);
 const envTex = pmrem.fromScene(new RoomEnvironment(renderer), 0.04).texture;
-
-const composer = new EffectComposer(renderer);
-composer.addPass(new RenderPass(scene, camera));
-const bloom = new UnrealBloomPass(new THREE.Vector2(innerWidth, innerHeight), 0.25, 0.5, 0.92);
-composer.addPass(bloom);
-composer.addPass(new OutputPass());
 
 const manager = new THREE.LoadingManager();
 const dracoLoader = new DRACOLoader();
@@ -101,31 +104,37 @@ const gltfLoader = new GLTFLoader(manager);
 gltfLoader.setDRACOLoader(dracoLoader);
 
 const texLoader = new THREE.TextureLoader(manager);
-const loadTex = (url) => {
-  const t = texLoader.load(url);
+const loadTex = (url, onLoad) => {
+  const t = texLoader.load(url, onLoad);
   t.colorSpace = THREE.SRGBColorSpace;
   t.anisotropy = renderer.capabilities.getMaxAnisotropy();
   return t;
 };
 
 const audio = new ExhibitionAudio();
-const glowTex = createGlowTexture();
-const goldGlowTex = createGlowTexture('rgba(255,236,190,1)', 'rgba(255,190,90,0.35)');
 
 /* =====================================================================
- *  공용 머티리얼 / 헬퍼
+ *  머티리얼 — 모두 무광/저광택 (눈부심 방지)
  * ===================================================================== */
+const ANISO = renderer.capabilities.getMaxAnisotropy();
+const tune = (t, rx, ry) => { t.anisotropy = ANISO; if (rx) t.repeat.set(rx, ry ?? rx); return t; };
+
 const M = {
-  concrete: new THREE.MeshStandardMaterial({ map: noiseTexture('#3b3f47', 16, 512, 3), roughness: 0.92, metalness: 0 }),
-  concreteDark: new THREE.MeshStandardMaterial({ map: noiseTexture('#22252b', 14, 512, 3), roughness: 0.95 }),
-  ceiling: new THREE.MeshStandardMaterial({ color: 0x0c0d10, roughness: 1 }),
-  hallWall: new THREE.MeshStandardMaterial({ map: noiseTexture('#3a2629', 10, 512, 6), roughness: 0.88 }),
-  hallWainscot: new THREE.MeshStandardMaterial({ color: 0x1a1214, roughness: 0.6, metalness: 0.1 }),
-  gold: new THREE.MeshStandardMaterial({ color: 0xd4a85a, metalness: 1, roughness: 0.28, envMap: envTex, envMapIntensity: 1.2 }),
-  darkMetal: new THREE.MeshStandardMaterial({ color: 0x1b1d22, metalness: 0.8, roughness: 0.35, envMap: envTex, envMapIntensity: 0.5 }),
-  // 천장 조명 밝기 대폭 완화 (눈부심 없는 차분한 고급 미술관 간접등)
-  stripCool: new THREE.MeshBasicMaterial({ color: new THREE.Color(0.42, 0.5, 0.68), toneMapped: true }),
-  stripWarm: new THREE.MeshBasicMaterial({ color: new THREE.Color(0.55, 0.38, 0.22), toneMapped: true }),
+  plaster: new THREE.MeshStandardMaterial({ map: tune(plasterTexture('#d9cfbb', 3)), roughness: 0.95 }),
+  plasterDark: new THREE.MeshStandardMaterial({ map: tune(plasterTexture('#bfb39c', 2)), roughness: 0.95 }),
+  marbleDado: new THREE.MeshStandardMaterial({ map: tune(plasterTexture('#6d5a48', 2)), roughness: 0.7 }),
+  stone: new THREE.MeshStandardMaterial({ color: 0xe6dccb, roughness: 0.85 }),
+  stoneShade: new THREE.MeshStandardMaterial({ color: 0xcfc3ad, roughness: 0.9 }),
+  ceiling: new THREE.MeshStandardMaterial({ map: tune(cofferTexture('#e4dac7')), roughness: 1 }),
+  damask: new THREE.MeshStandardMaterial({ map: tune(damaskTexture('#26352c', 'rgba(255,236,190,0.05)')), roughness: 0.95 }),
+  panelWhite: new THREE.MeshStandardMaterial({ color: 0xe8e0cf, roughness: 0.85 }),
+  // 금박 몰딩: 금속감은 살리되 거울처럼 번쩍이지 않도록 거칠기를 높임
+  gold: new THREE.MeshStandardMaterial({ color: 0xa07c45, metalness: 0.65, roughness: 0.46, envMap: envTex, envMapIntensity: 0.35 }),
+  brass: new THREE.MeshStandardMaterial({ color: 0x9c7a45, metalness: 0.6, roughness: 0.5, envMap: envTex, envMapIntensity: 0.3 }),
+  darkWood: new THREE.MeshStandardMaterial({ color: 0x3a2618, roughness: 0.7 }),
+  velvet: new THREE.MeshStandardMaterial({ color: 0x6b1c22, roughness: 1 }),
+  liner: new THREE.MeshStandardMaterial({ color: 0x1b1712, roughness: 1 }),
+  glowSoft: new THREE.MeshBasicMaterial({ color: new THREE.Color(0.95, 0.88, 0.74), toneMapped: false }),
 };
 
 function box(w, h, d, mat, x = 0, y = 0, z = 0, parent = scene) {
@@ -139,67 +148,72 @@ function plane(w, h, mat, parent = scene) {
   parent.add(m);
   return m;
 }
-function signMesh(tex, w, h, opts = {}) {
-  const mat = new THREE.MeshBasicMaterial({ map: tex, transparent: true, depthWrite: false, toneMapped: opts.toneMapped ?? true });
-  if (opts.color) mat.color = opts.color;
-  return plane(w, h, mat, opts.parent || scene);
+function cyl(rt, rb, h, mat, x, y, z, parent = scene, seg = 32) {
+  const m = new THREE.Mesh(new THREE.CylinderGeometry(rt, rb, h, seg), mat);
+  m.position.set(x, y, z);
+  parent.add(m);
+  return m;
 }
-function makeDust(count, sampler, color, size) {
-  const pos = new Float32Array(count * 3);
-  const seed = new Float32Array(count);
-  const v = new THREE.Vector3();
-  for (let i = 0; i < count; i++) {
-    sampler(v);
-    pos.set([v.x, v.y, v.z], i * 3);
-    seed[i] = Math.random();
-  }
-  const g = new THREE.BufferGeometry();
-  g.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-  g.setAttribute('aSeed', new THREE.BufferAttribute(seed, 1));
-  const p = new THREE.Points(g, createDustMaterial(color, size));
-  p.frustumCulled = false;
-  scene.add(p);
-  return p;
+function signMesh(tex, w, h, parent = scene, opts = {}) {
+  const mat = new THREE.MeshStandardMaterial({ map: tex, transparent: true, depthWrite: false, roughness: 0.8, metalness: opts.metal ?? 0 });
+  const m = plane(w, h, mat, parent);
+  m.renderOrder = 2;
+  return m;
+}
+
+/** 사각 액자 몰딩 (구멍 뚫린 사각형을 베벨로 돌출) */
+function frameGeometry(ow, oh, iw, ih, depth = 0.08, bevel = 0.05) {
+  const shape = new THREE.Shape();
+  shape.moveTo(-ow / 2, -oh / 2); shape.lineTo(ow / 2, -oh / 2); shape.lineTo(ow / 2, oh / 2); shape.lineTo(-ow / 2, oh / 2); shape.lineTo(-ow / 2, -oh / 2);
+  const hole = new THREE.Path();
+  hole.moveTo(-iw / 2, -ih / 2); hole.lineTo(-iw / 2, ih / 2); hole.lineTo(iw / 2, ih / 2); hole.lineTo(iw / 2, -ih / 2); hole.lineTo(-iw / 2, -ih / 2);
+  shape.holes.push(hole);
+  return new THREE.ExtrudeGeometry(shape, { depth, bevelEnabled: true, bevelThickness: bevel, bevelSize: bevel, bevelSegments: 3 });
+}
+
+/** 액자 세트: 바깥 금박 + 안쪽 가는 금박 + 짙은 매트 */
+function buildFrameSet(parent, w, h, { outer = 0.3, mat = 0.1 } = {}) {
+  const iw = w + mat * 2, ih = h + mat * 2;
+  const ow = iw + outer * 2, oh = ih + outer * 2;
+  const frame = new THREE.Mesh(frameGeometry(ow, oh, iw, ih, 0.1, 0.06), M.gold);
+  frame.position.z = 0.02;
+  parent.add(frame);
+  const lip = new THREE.Mesh(frameGeometry(iw + 0.06, ih + 0.06, iw - 0.04, ih - 0.04, 0.04, 0.015), M.gold);
+  lip.position.z = 0.1;
+  parent.add(lip);
+  const liner = plane(iw, ih, M.liner, parent);
+  liner.position.z = 0.06;
+  return { ow, oh, frame, lip, liner };
 }
 
 /* =====================================================================
- *  바닥 (반사) — 로비: 폴리싱 콘크리트 / 갤러리: 원목 마루
+ *  바닥 — 무광 체커 대리석 (로비) / 헤링본 느낌 원목 (갤러리)
  * ===================================================================== */
 {
-  const totalD = LOBBY.zFront - HALL.zEnd + 2;
-  const mirror = new Reflector(new THREE.PlaneGeometry(LOBBY.x * 2, totalD), {
-    clipBias: 0.003,
-    textureWidth: Math.floor(innerWidth * PR * 0.5),
-    textureHeight: Math.floor(innerHeight * PR * 0.5),
-    color: 0x8a8f99,
-  });
-  mirror.rotation.x = -Math.PI / 2;
-  mirror.position.set(0, 0, (LOBBY.zFront + HALL.zEnd) / 2);
-  scene.add(mirror);
-
   const lobbyD = LOBBY.zFront - LOBBY.zBack;
-  const lobbyFloorTex = noiseTexture('#1c1f25', 12, 512, 6);
-  const lobbyFloor = plane(LOBBY.x * 2, lobbyD, new THREE.MeshStandardMaterial({ map: lobbyFloorTex, roughness: 0.4, metalness: 0.1, transparent: true, opacity: 0.82 }));
-  lobbyFloor.rotation.x = -Math.PI / 2;
-  lobbyFloor.position.set(0, 0.003, (LOBBY.zFront + LOBBY.zBack) / 2);
+  const marble = tune(marbleFloorTexture({ light: '#ddd5c6', dark: '#62574c' }), (LOBBY.x * 2) / 4.8, lobbyD / 4.8);
+  const lf = plane(LOBBY.x * 2, lobbyD, new THREE.MeshStandardMaterial({ map: marble, roughness: 0.6, metalness: 0 }));
+  lf.rotation.x = -Math.PI / 2;
+  lf.position.set(0, 0, (LOBBY.zFront + LOBBY.zBack) / 2);
 
   const hallD = HALL.zStart - HALL.zEnd;
-  const wood = woodTexture();
-  wood.repeat.set(2.2, hallD / 4.5);
-  const hallFloor = plane(HALL.x * 2, hallD, new THREE.MeshStandardMaterial({ map: wood, roughness: 0.45, transparent: true, opacity: 0.86 }));
-  hallFloor.rotation.x = -Math.PI / 2;
-  hallFloor.position.set(0, 0.003, (HALL.zStart + HALL.zEnd) / 2);
-
-  // 로비 바닥 라인 조명 (입구 → 스크린으로 안내)
-  for (const x of [-3.2, 3.2]) {
-    const s = box(0.05, 0.01, lobbyD - 4, M.stripCool, x, 0.01, (LOBBY.zFront + LOBBY.zBack) / 2 + 1);
-    s.material = M.stripCool.clone();
-    s.material.color = new THREE.Color(0.4, 0.55, 0.9);
+  const wood = tune(woodTexture(), 2.4, hallD / 4.2);
+  const hf = plane(HALL.x * 2, hallD, new THREE.MeshStandardMaterial({ map: wood, roughness: 0.75, color: 0xc9b7a2 }));
+  hf.rotation.x = -Math.PI / 2;
+  hf.position.set(0, 0, (HALL.zStart + HALL.zEnd) / 2);
+  // 회랑 중앙 카펫 러너
+  const rug = plane(2.2, hallD - 3, M.velvet);
+  rug.rotation.x = -Math.PI / 2;
+  rug.position.set(0, 0.006, (HALL.zStart + HALL.zEnd) / 2 - 0.5);
+  for (const s of [-1, 1]) {
+    const edge = plane(0.08, hallD - 3, M.gold);
+    edge.rotation.x = -Math.PI / 2;
+    edge.position.set(s * 1.06, 0.008, (HALL.zStart + HALL.zEnd) / 2 - 0.5);
   }
 }
 
 /* =====================================================================
- *  로비 건축
+ *  로비 건축 — 크림색 석회벽, 기둥, 격자 천장, 고전 포털
  * ===================================================================== */
 const lobbyGroup = new THREE.Group();
 scene.add(lobbyGroup);
@@ -207,211 +221,140 @@ scene.add(lobbyGroup);
   const { x: LX, zBack: ZB, zFront: ZF, h: H } = LOBBY;
   const D = ZF - ZB;
   const cz = (ZF + ZB) / 2;
-  // 좌우 벽
-  const lw = plane(D, H, M.concrete, lobbyGroup);
-  lw.rotation.y = Math.PI / 2;
-  lw.position.set(-LX, H / 2, cz);
-  const rw = plane(D, H, M.concrete, lobbyGroup);
-  rw.rotation.y = -Math.PI / 2;
-  rw.position.set(LX, H / 2, cz);
-  // 앞 벽 (카메라 뒤)
-  const fw = plane(LX * 2, H, M.concreteDark, lobbyGroup);
+
+  // 벽
+  for (const s of [-1, 1]) {
+    const w = plane(D, H, M.plaster, lobbyGroup);
+    w.rotation.y = -s * Math.PI / 2;
+    w.position.set(s * LX, H / 2, cz);
+    // 하부 대리석 징두리 + 몰딩
+    box(0.08, 1.15, D, M.marbleDado, s * (LX - 0.04), 0.575, cz, lobbyGroup);
+    box(0.14, 0.07, D, M.stone, s * (LX - 0.07), 1.18, cz, lobbyGroup);
+    box(0.16, 0.18, D, M.stoneShade, s * (LX - 0.08), 0.09, cz, lobbyGroup);
+    // 상부 코니스
+    box(0.3, 0.22, D, M.stone, s * (LX - 0.15), H - 0.11, cz, lobbyGroup);
+    box(0.18, 0.08, D, M.gold, s * (LX - 0.09), H - 0.32, cz, lobbyGroup);
+  }
+  const fw = plane(LX * 2, H, M.plasterDark, lobbyGroup);
   fw.rotation.y = Math.PI;
   fw.position.set(0, H / 2, ZF);
-  // 천장
-  const ceil = plane(LX * 2, D, M.ceiling, lobbyGroup);
+
+  // 천장 (코퍼 격자)
+  const ceilMat = M.ceiling.clone();
+  ceilMat.map = M.ceiling.map.clone();
+  ceilMat.map.needsUpdate = true;
+  ceilMat.map.repeat.set((LX * 2) / 2.6, D / 2.6);
+  const ceil = plane(LX * 2, D, ceilMat, lobbyGroup);
   ceil.rotation.x = Math.PI / 2;
   ceil.position.set(0, H, cz);
+
   // 뒷벽 (문 개구부 제외)
-  const side = (LX - DOOR.w / 2);
-  box(side, H, 0.6, M.concreteDark, -(DOOR.w / 2 + side / 2), H / 2, ZB, lobbyGroup);
-  box(side, H, 0.6, M.concreteDark, DOOR.w / 2 + side / 2, H / 2, ZB, lobbyGroup);
-  box(DOOR.w, H - DOOR.h, 0.6, M.concreteDark, 0, DOOR.h + (H - DOOR.h) / 2, ZB, lobbyGroup);
+  const side = LX - DOOR.w / 2;
+  box(side, H, 0.6, M.plaster, -(DOOR.w / 2 + side / 2), H / 2, ZB, lobbyGroup);
+  box(side, H, 0.6, M.plaster, DOOR.w / 2 + side / 2, H / 2, ZB, lobbyGroup);
+  box(DOOR.w, H - DOOR.h, 0.6, M.plaster, 0, DOOR.h + (H - DOOR.h) / 2, ZB, lobbyGroup);
+  for (const s of [-1, 1]) box(side, 1.15, 0.7, M.marbleDado, s * (DOOR.w / 2 + side / 2), 0.575, ZB + 0.01, lobbyGroup);
 
-  // 천장 라인 조명 + 벽 수직 조명
-  for (const x of [-LX + 0.4, LX - 0.4]) box(0.1, 0.06, D - 1, M.stripCool, x, H - 0.05, cz, lobbyGroup);
-  for (let z = ZB + 3; z < ZF - 1; z += 4.2) {
-    box(0.06, H - 1.2, 0.06, M.stripCool, -LX + 0.04, H / 2, z, lobbyGroup);
-    box(0.06, H - 1.2, 0.06, M.stripCool, LX - 0.04, H / 2, z, lobbyGroup);
+  // 좌우 벽 필라스터 (벽기둥)
+  const pilaster = (x, z, rotY) => {
+    const g = new THREE.Group();
+    g.position.set(x, 0, z);
+    g.rotation.y = rotY;
+    lobbyGroup.add(g);
+    box(0.8, 0.5, 0.36, M.stoneShade, 0, 0.25, 0, g);
+    box(0.62, H - 1.3, 0.24, M.stone, 0, (H - 1.3) / 2 + 0.5, 0, g);
+    for (let k = -2; k <= 2; k++) box(0.05, H - 1.6, 0.02, M.stoneShade, k * 0.11, (H - 1.3) / 2 + 0.5, 0.125, g);
+    box(0.86, 0.22, 0.4, M.stoneShade, 0, H - 0.69, 0, g);
+    box(0.74, 0.08, 0.32, M.gold, 0, H - 0.84, 0, g);
+  };
+  // 영상 액자(왼쪽)와 전시 타이틀(오른쪽)이 걸리는 z = -3.8 칸은 비워 둠
+  for (const z of [ZB + 2.2, ZB + 14.2, ZB + 20.2]) {
+    pilaster(-LX + 0.12, z, Math.PI / 2);
+    pilaster(LX - 0.12, z, -Math.PI / 2);
   }
-  // 천장 루버
-  for (let z = ZB + 1; z < ZF; z += 1.6) box(LX * 2 - 1, 0.25, 0.08, M.darkMetal, 0, H - 0.2, z, lobbyGroup);
-}
 
-let endSignMesh = null;
+  // 갤러리 포털: 기둥 2개 + 엔타블러처 + 페디먼트
+  const PZ = ZB + 0.55;
+  for (const s of [-1, 1]) {
+    const x = s * (DOOR.w / 2 + 0.75);
+    box(1.0, 0.45, 1.0, M.stoneShade, x, 0.225, PZ, lobbyGroup);
+    cyl(0.32, 0.36, DOOR.h - 0.45, M.stone, x, 0.45 + (DOOR.h - 0.45) / 2, PZ, lobbyGroup, 24);
+    box(0.95, 0.28, 0.95, M.stoneShade, x, DOOR.h + 0.02, PZ, lobbyGroup);
+  }
+  box(DOOR.w + 3.0, 0.75, 1.1, M.stone, 0, DOOR.h + 0.5, PZ, lobbyGroup);
+  box(DOOR.w + 3.2, 0.1, 1.2, M.gold, 0, DOOR.h + 0.9, PZ, lobbyGroup);
+  {
+    const tri = new THREE.Shape();
+    const tw = (DOOR.w + 3.2) / 2;
+    tri.moveTo(-tw, 0); tri.lineTo(tw, 0); tri.lineTo(0, 1.05); tri.lineTo(-tw, 0);
+    const ped = new THREE.Mesh(new THREE.ExtrudeGeometry(tri, { depth: 0.9, bevelEnabled: false }), M.stone);
+    ped.position.set(0, DOOR.h + 0.95, PZ - 0.45);
+    lobbyGroup.add(ped);
+  }
 
-/* --- 로비 사인 (폰트 로드 후 생성) --- */
-function buildLobbySigns() {
-  const { x: LX, h: H } = LOBBY;
-  const left = textSign(
-    [
-      { text: 'INDUK', font: `600 330px ${FONTS.SERIF}`, y: 300, color: '#e9eef8', spacing: 40 },
-      { text: 'UNIVERSITY', font: `500 80px ${FONTS.GROT}`, y: 520, color: '#9fb4d8', spacing: 46 },
-      { text: 'GAME & MEDIA EXHIBITION 2026', font: `500 64px ${FONTS.GROT}`, y: 660, color: '#ffffff', spacing: 18 },
-      { text: '인덕대학교 · 졸업 작품 전시', font: `400 56px ${FONTS.SANS}`, y: 770, color: '#9aa3b5', spacing: 8 },
-    ],
-    { w: 2048, h: 900 }
-  );
-  const ls = signMesh(left, 11, 11 * 900 / 2048, { parent: lobbyGroup });
-  ls.rotation.y = Math.PI / 2;
-  ls.position.set(-LX + 0.06, 5.2, 4.5);
-
-  const right = textSign(
-    [
-      { text: 'DOYEON KIM', font: `600 210px ${FONTS.SERIF}`, y: 230, color: '#f4efe6', spacing: 22 },
-      { text: '김도연  ·  GAME & WEB DEVELOPER', font: `500 70px ${FONTS.SANS}`, y: 440, color: '#d9b981', spacing: 10 },
-      { text: 'Student ID 202236028', font: `400 54px ${FONTS.GROT}`, y: 560, color: '#8d96a8', spacing: 14 },
-      { text: '— 5 WORKS ON DISPLAY —', font: `500 54px ${FONTS.GROT}`, y: 700, color: '#ffffff', spacing: 20 },
-    ],
-    { w: 2048, h: 860 }
-  );
-  const rs = signMesh(right, 10.5, 10.5 * 860 / 2048, { parent: lobbyGroup });
-  rs.rotation.y = -Math.PI / 2;
-  rs.position.set(LX - 0.06, 5.2, 4.5);
-
-  // 문 위 사인 (스크린 뒤에 숨어있다가 스크린이 올라가면 드러남)
-  const gate = textSign(
-    [
-      { text: 'THE INNER GALLERY', font: `600 150px ${FONTS.SERIF}`, y: 150, color: '#ffe2a8', glow: 'rgba(255,190,90,.9)', blur: 30, spacing: 26 },
-      { text: '작 품 전 시 관', font: `500 64px ${FONTS.SANS}`, y: 300, color: '#d8b77a', spacing: 30 },
-    ],
-    { w: 2048, h: 380 }
-  );
-  const gs = signMesh(gate, 6.4, 6.4 * 380 / 2048, { parent: lobbyGroup, toneMapped: false, color: new THREE.Color(1.3, 1.3, 1.3) });
-  gs.position.set(0, 7.15, LOBBY.zBack + 0.32);
-
-  // 엔딩 벽
-  const end = textSign(
-    [
-      { text: 'THANK YOU', font: `600 260px ${FONTS.SERIF}`, y: 250, color: '#fff1d2', glow: 'rgba(255,190,90,.8)', blur: 40, spacing: 40 },
-      { text: 'FOR VISITING THE EXHIBITION', font: `500 70px ${FONTS.GROT}`, y: 430, color: '#d8b77a', spacing: 22 },
-      { text: '인덕대학교 · 김도연 · 2026', font: `400 60px ${FONTS.SANS}`, y: 560, color: '#b9a689', spacing: 10 },
-    ],
-    { w: 2048, h: 700 }
-  );
-  const es = signMesh(end, 8.2, 8.2 * 700 / 2048, { toneMapped: false, color: new THREE.Color(1.15, 1.15, 1.15) });
-  es.position.set(0, 3.3, HALL.zEnd + 0.05);
-  es.material.transparent = true;
-  es.material.opacity = 0;
-  es.visible = false;
-  endSignMesh = es;
+  // 샹들리에 (작은 전구 링 — 블룸 없이 은은하게)
+  const chand = new THREE.Group();
+  chand.position.set(0, H - 1.6, 2.6);
+  lobbyGroup.add(chand);
+  box(0.04, 1.2, 0.04, M.brass, 0, 0.9, 0, chand);
+  const ring = new THREE.Mesh(new THREE.TorusGeometry(1.1, 0.04, 8, 64), M.brass);
+  ring.rotation.x = Math.PI / 2;
+  chand.add(ring);
+  const ring2 = new THREE.Mesh(new THREE.TorusGeometry(0.6, 0.035, 8, 48), M.brass);
+  ring2.rotation.x = Math.PI / 2;
+  ring2.position.y = -0.35;
+  chand.add(ring2);
+  const bulbGeo = new THREE.SphereGeometry(0.06, 12, 8);
+  for (let i = 0; i < 12; i++) {
+    const a = (i / 12) * Math.PI * 2;
+    const b = new THREE.Mesh(bulbGeo, M.glowSoft);
+    b.position.set(Math.cos(a) * 1.1, 0.1, Math.sin(a) * 1.1);
+    chand.add(b);
+  }
 }
 
 /* =====================================================================
- *  [Scene 1] 대표 3D 조각상 쇼케이스 (해외 미술작품 조각상)
+ *  로비 중앙 — 대리석 조각상
  * ===================================================================== */
 const hero = new THREE.Group();
 hero.position.set(0, 0, 2.6);
 scene.add(hero);
-
-const heroFloat = new THREE.Group();
-hero.add(heroFloat);
-heroFloat.position.y = 0.5;
-
 let heroSculpture = null;
-// 2단 대리석 좌대 (Museum Marble Pedestal)
 {
-  const pedBase = new THREE.Mesh(new THREE.CylinderGeometry(2.4, 2.6, 0.45, 64), M.darkMetal);
-  pedBase.position.y = 0.225;
-  hero.add(pedBase);
-
-  const pedTop = new THREE.Mesh(new THREE.CylinderGeometry(2.0, 2.2, 0.35, 64), M.concrete);
-  pedTop.position.y = 0.55;
-  hero.add(pedTop);
-
-  const goldRing = new THREE.Mesh(new THREE.TorusGeometry(2.42, 0.028, 12, 96), M.gold);
-  goldRing.rotation.x = Math.PI / 2;
-  goldRing.position.y = 0.45;
-  hero.add(goldRing);
-
-  const innerGoldRing = new THREE.Mesh(new THREE.TorusGeometry(2.02, 0.024, 12, 96), M.gold);
-  innerGoldRing.rotation.x = Math.PI / 2;
-  innerGoldRing.position.y = 0.725;
-  hero.add(innerGoldRing);
-
-  // 천장 링 샹들리에 조명
-  const halo = new THREE.Mesh(new THREE.TorusGeometry(3.0, 0.05, 8, 128), M.stripCool);
-  halo.rotation.x = Math.PI / 2;
-  halo.position.set(0, LOBBY.h - 0.4, 2.6);
-  scene.add(halo);
-
-  // 좌대 전면 명패
-  const plaqueMat = new THREE.MeshStandardMaterial({
-    map: textSign([
-      { text: 'GRAND ATRIUM · MASTERPIECE SCULPTURE', font: `600 68px ${FONTS.GROT}`, y: 80, color: '#e5be79', spacing: 14 },
-      { text: 'Sanctuary Goddess · Nemetona', font: `600 130px ${FONTS.SERIF}`, y: 215, color: '#ffffff', spacing: 10 },
-      { text: '인덕대학교 게임 & 미디어 전시관 · 김도연 2026', font: `400 64px ${FONTS.SANS}`, y: 345, color: '#9aa5b8', spacing: 6 }
-    ], { w: 1800, h: 440 }),
-    roughness: 0.3,
-    metalness: 0.5,
-    envMap: envTex,
-    envMapIntensity: 0.8
-  });
-  const plaque = plane(2.2, 2.2 * 440 / 1800, plaqueMat, hero);
-  plaque.position.set(0, 0.55, 2.15);
+  box(2.3, 0.3, 2.3, M.stoneShade, 0, 0.15, 0, hero);
+  box(1.75, 1.0, 1.75, M.stone, 0, 0.8, 0, hero);
+  box(2.05, 0.18, 2.05, M.stoneShade, 0, 1.39, 0, hero);
+  box(1.8, 0.05, 0.02, M.gold, 0, 1.2, 0.88, hero);
+  const plaque = signMesh(textSign([
+    { text: 'NEMETONA', font: `600 120px ${FONTS.SERIF}`, y: 110, color: '#3b2e1e', spacing: 24 },
+    { text: '성소의 여신 · 대리석 조각 (복제)', font: `500 54px ${FONTS.SANS}`, y: 220, color: '#5c4a33', spacing: 4 },
+  ], { w: 1400, h: 300 }), 1.5, 1.5 * 300 / 1400, hero);
+  plaque.position.set(0, 0.8, 0.876);
 }
 
-// 3D 조각상 모델 로드 (nemetona.glb - 3.8MB, 깃허브 100MB 제한 아래의 해외 미술관 명작 대리석 조각상)
 gltfLoader.load('assets/models/nemetona.glb', (gltf) => {
   const model = gltf.scene;
   const box3 = new THREE.Box3().setFromObject(model);
   const size = new THREE.Vector3();
   box3.getSize(size);
-  const maxDim = Math.max(size.x, size.y, size.z);
-  const targetH = 3.65;
-  const scale = targetH / maxDim;
+  const scale = 3.0 / Math.max(size.x, size.y, size.z);
   model.scale.setScalar(scale);
-
-  // 중심 정렬
   const center = new THREE.Vector3();
   box3.getCenter(center);
-  model.position.x = -center.x * scale;
-  model.position.y = -box3.min.y * scale + 0.22;
-  model.position.z = -center.z * scale;
-
-  // 해외 유명 미술관의 천연 카라라 백대리석 질감 (조각상 이목구비와 옷주름 음영이 또렷하게 표현됨)
-  const marbleMat = new THREE.MeshStandardMaterial({
-    color: 0xc6c1b6,
-    roughness: 0.68,
-    metalness: 0.02,
-    envMap: envTex,
-    envMapIntensity: 0.45
-  });
-
-  model.traverse((child) => {
-    if (child.isMesh) {
-      child.material = marbleMat;
-      child.castShadow = true;
-      child.receiveShadow = true;
-      child.userData.isHero = true;
+  model.position.set(-center.x * scale, -box3.min.y * scale + 1.48, -center.z * scale);
+  const marbleMat = new THREE.MeshStandardMaterial({ color: 0xe2dccf, roughness: 0.72, metalness: 0, envMap: envTex, envMapIntensity: 0.25 });
+  model.traverse((c) => {
+    if (c.isMesh) {
+      c.material = marbleMat;
+      c.userData.isHero = true;
     }
   });
-
-  heroFloat.add(model);
+  hero.add(model);
   heroSculpture = model;
 });
 
-// 조각상 전용 조명 (조각상의 입체적 음영과 실루엣을 살리는 부드러운 갤러리 라이트)
-const heroSpot = new THREE.SpotLight(0xfff8ee, 14, 20, 0.55, 0.85, 1.4);
-heroSpot.position.set(0, LOBBY.h - 0.4, 6.2);
-heroSpot.target = heroFloat;
-scene.add(heroSpot);
-
-const heroRimLight = new THREE.SpotLight(0xaed3ff, 12, 18, 0.6, 0.8, 1.5);
-heroRimLight.position.set(0, 5.0, -1.5);
-heroRimLight.target = heroFloat;
-scene.add(heroRimLight);
-
-// 부유하는 금빛 미술관 더스트 파티클
-const jellyDust = [
-  makeDust(90, (v) => {
-    const a = Math.random() * Math.PI * 2, r = 1.6 + Math.random() * 2.8;
-    v.set(Math.cos(a) * r, 0.8 + Math.random() * 4.6, 2.6 + Math.sin(a) * r * 0.7);
-  }, new THREE.Color(1.0, 0.88, 0.55), 45)
-];
-
 /* =====================================================================
- *  [Scene 2] 빔프로젝터 + 스크린 + 쇼릴 영상 (영상 밝기 최적화 및 스테이지)
+ *  로비 왼쪽 벽 — 금박 액자 속 영상 (16:9 안에 원본 비율 그대로 맞춤)
  * ===================================================================== */
 const video = document.createElement('video');
 video.muted = true;
@@ -429,157 +372,96 @@ video.addEventListener('ended', () => {
   loadReel(reelIndex + 1);
   if (state.videoWanted) video.play().catch(() => {});
 });
+video.addEventListener('loadedmetadata', () => {
+  if (video.videoWidth) screenMat.uniforms.uVideoAspect.value = video.videoWidth / video.videoHeight;
+});
 loadReel(0);
 const videoTex = new THREE.VideoTexture(video);
 videoTex.colorSpace = THREE.SRGBColorSpace;
 
-const screenGroup = new THREE.Group();
-screenGroup.position.set(0, SCREEN.top, SCREEN.z);
-scene.add(screenGroup);
-
-// 영상 본래 색감과 선명도를 살리는 스크린 쉐이더 (과도한 블룸 폭발 방지 및 선명한 화질)
 const screenMat = new THREE.ShaderMaterial({
-  uniforms: { uMap: { value: videoTex }, uOn: { value: 0 }, uTime: { value: 0 } },
+  toneMapped: false,
+  uniforms: {
+    uMap: { value: videoTex },
+    uOn: { value: 0 },
+    uVideoAspect: { value: 16 / 9 },
+    uScreenAspect: { value: VIDEO.w / VIDEO.h },
+  },
   vertexShader: `varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position,1.0); }`,
   fragmentShader: /* glsl */ `
-    uniform sampler2D uMap; uniform float uOn, uTime; varying vec2 vUv;
+    uniform sampler2D uMap; uniform float uOn, uVideoAspect, uScreenAspect; varying vec2 vUv;
     void main(){
-      vec3 fabric = vec3(0.012, 0.013, 0.016);
-      vec3 v = texture2D(uMap, vUv).rgb;
-      // 깊고 단단한 블랙과 선명한 원본 컬러 표현 (하얗게 뜨는 현상 방지)
-      v = pow(v, vec3(1.08));
-      v *= 1.05;
-      vec3 col = mix(fabric, v, uOn);
+      // contain: 영상이 잘리거나 확대되지 않도록 화면 안에 원본 비율 그대로 배치
+      vec2 uv = vUv - 0.5;
+      float r = uVideoAspect / uScreenAspect;
+      if (r > 1.0) uv.y *= r; else uv.x /= r;
+      uv += 0.5;
+      float inside = step(0.0, uv.x) * step(uv.x, 1.0) * step(0.0, uv.y) * step(uv.y, 1.0);
+      vec3 v = texture2D(uMap, clamp(uv, 0.0, 1.0)).rgb * 0.92;
+      vec3 col = mix(vec3(0.025, 0.022, 0.02), v * inside + vec3(0.02) * (1.0 - inside), uOn);
       gl_FragColor = vec4(col, 1.0);
-      #include <tonemapping_fragment>
       #include <colorspace_fragment>
     }`,
 });
-const screenMesh = new THREE.Mesh(new THREE.PlaneGeometry(SCREEN.w, SCREEN.h), screenMat);
-screenMesh.position.y = -SCREEN.h / 2;
-screenGroup.add(screenMesh);
-
-const screenBorder = new THREE.Mesh(new THREE.PlaneGeometry(SCREEN.w + 0.35, SCREEN.h + 0.35), new THREE.MeshStandardMaterial({ color: 0x070709, roughness: 0.9 }));
-screenBorder.position.set(0, -SCREEN.h / 2, -0.02);
-screenGroup.add(screenBorder);
-
-const screenRod = box(SCREEN.w + 0.6, 0.09, 0.09, M.darkMetal, 0, 0, 0.02);
-scene.remove(screenRod);
-screenRod.position.set(0, SCREEN.top - SCREEN.h - 0.15, SCREEN.z + 0.03);
-scene.add(screenRod);
-box(SCREEN.w + 1.0, 0.34, 0.38, M.darkMetal, 0, SCREEN.top + 0.17, SCREEN.z); // 롤러 하우징
-
-const screenLight = new THREE.PointLight(0xa5c4ff, 0, 10, 2.0);
-screenLight.position.set(0, 4.2, SCREEN.z + 2.5);
-scene.add(screenLight);
-
-// 프로젝터 본체
-const projector = new THREE.Group();
-projector.position.copy(PROJ.pos);
-scene.add(projector);
-box(1.35, 0.46, 1.1, M.darkMetal, 0, 0, 0, projector);
-box(1.37, 0.06, 1.12, new THREE.MeshStandardMaterial({ color: 0xe8e8ea, roughness: 0.4, metalness: 0.3 }), 0, 0.2, 0, projector);
-box(0.06, LOBBY.h - PROJ.pos.y - 0.2, 0.06, M.darkMetal, 0, (LOBBY.h - PROJ.pos.y) / 2 + 0.1, 0, projector);
+const screenGroup = new THREE.Group();
+screenGroup.position.set(-LOBBY.x + 0.12, VIDEO.y, VIDEO.z);
+screenGroup.rotation.y = Math.PI / 2;
+scene.add(screenGroup);
 {
-  const lens = new THREE.Mesh(new THREE.CylinderGeometry(0.17, 0.2, 0.26, 32), M.darkMetal);
-  lens.rotation.x = Math.PI / 2;
-  lens.position.set(0.25, -0.03, -0.66);
-  projector.add(lens);
-  const glass = new THREE.Mesh(new THREE.CircleGeometry(0.15, 32), new THREE.MeshBasicMaterial({ color: 0x223, toneMapped: false }));
-  glass.position.set(0.25, -0.03, -0.8);
-  glass.rotation.y = Math.PI;
-  projector.add(glass);
-  projector.userData.glass = glass;
-  const led = box(0.04, 0.04, 0.01, new THREE.MeshBasicMaterial({ color: 0x220000, toneMapped: false }), -0.45, -0.1, -0.56, projector);
-  projector.userData.led = led;
+  const screenMesh = plane(VIDEO.w, VIDEO.h, screenMat, screenGroup);
+  screenMesh.position.z = 0.07;
+  buildFrameSet(screenGroup, VIDEO.w, VIDEO.h, { outer: 0.34, mat: 0.12 });
+  const label = signMesh(textSign([
+    { text: 'EXHIBITION FILM', font: `600 96px ${FONTS.SERIF}`, y: 90, color: '#3b2e1e', spacing: 20 },
+    { text: '전시 소개 영상', font: `500 54px ${FONTS.SANS}`, y: 190, color: '#6a5539', spacing: 8 },
+  ], { w: 1400, h: 260 }), 2.4, 2.4 * 260 / 1400, screenGroup);
+  label.position.set(0, -VIDEO.h / 2 - 0.85, 0.02);
 }
-const lensWorld = new THREE.Vector3(PROJ.pos.x + 0.25, PROJ.pos.y - 0.03, PROJ.pos.z - 0.82);
-const lensFlare = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color: new THREE.Color(1.3, 1.5, 2.0), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-lensFlare.position.copy(lensWorld);
-lensFlare.scale.setScalar(2.0);
-scene.add(lensFlare);
-
-const screenCorners = [
-  new THREE.Vector3(-SCREEN.w / 2, SCREEN.top, SCREEN.z + 0.05),
-  new THREE.Vector3(SCREEN.w / 2, SCREEN.top, SCREEN.z + 0.05),
-  new THREE.Vector3(SCREEN.w / 2, SCREEN.top - SCREEN.h, SCREEN.z + 0.05),
-  new THREE.Vector3(-SCREEN.w / 2, SCREEN.top - SCREEN.h, SCREEN.z + 0.05),
-];
-const beamMat = createBeamMaterial(new THREE.Color(0.65, 0.78, 1.0));
-const beam = new THREE.Mesh(createBeamGeometry(lensWorld, screenCorners, 0.1), beamMat);
-beam.frustumCulled = false;
-scene.add(beam);
-const beamCoreMat = createBeamMaterial(new THREE.Color(0.8, 0.9, 1.0));
-const coreCorners = screenCorners.map((c) => new THREE.Vector3().lerpVectors(new THREE.Vector3(0, SCREEN.top - SCREEN.h / 2, c.z), c, 0.55));
-const beamCore = new THREE.Mesh(createBeamGeometry(lensWorld, coreCorners, 0.05), beamCoreMat);
-beamCore.frustumCulled = false;
-scene.add(beamCore);
-const beamDust = makeDust(800, (v) => {
-  const t = Math.pow(Math.random(), 0.8);
-  const u = Math.random(), w = Math.random();
-  const top = new THREE.Vector3().lerpVectors(screenCorners[0], screenCorners[1], u);
-  const bot = new THREE.Vector3().lerpVectors(screenCorners[3], screenCorners[2], u);
-  const far = top.lerp(bot, w);
-  v.lerpVectors(lensWorld, far, 0.08 + t * 0.9);
-}, new THREE.Color(0.7, 0.85, 1.0), 22);
 
 /* =====================================================================
- *  [Scene 3] 갤러리 대문 (양문형 아르데코 도어)
+ *  로비 오른쪽 벽 — 전시 타이틀 각인
  * ===================================================================== */
-const doorTex = doorTextures();
-const doorMat = new THREE.MeshStandardMaterial({
-  map: doorTex.map,
-  emissiveMap: doorTex.emissive,
-  emissive: new THREE.Color(0.9, 0.62, 0.25),
-  emissiveIntensity: 0.25,
-  metalness: 0.55,
-  roughness: 0.38,
-  envMap: envTex,
-  envMapIntensity: 0.6,
-});
+function buildSigns() {
+  const title = signMesh(textSign([
+    { text: 'INDUK UNIVERSITY', font: `600 150px ${FONTS.SERIF}`, y: 150, color: '#4a3a26', spacing: 40 },
+    { text: 'GRADUATION EXHIBITION 2026', font: `500 76px ${FONTS.SERIF}`, y: 300, color: '#7a5f3a', spacing: 24 },
+    { text: '인덕대학교 졸업 작품 전시회', font: `500 64px ${FONTS.SANS}`, y: 420, color: '#5c4a33', spacing: 14 },
+  ], { w: 2048, h: 520 }), 7.6, 7.6 * 520 / 2048, lobbyGroup);
+  title.rotation.y = -Math.PI / 2;
+  title.position.set(LOBBY.x - 0.05, 4.6, VIDEO.z);
+
+  const gate = signMesh(textSign([
+    { text: 'GALLERY OF WORKS', font: `600 120px ${FONTS.SERIF}`, y: 100, color: '#3d2f1f', spacing: 30 },
+  ], { w: 2048, h: 200 }), 5.6, 5.6 * 200 / 2048, lobbyGroup);
+  gate.position.set(0, DOOR.h + 0.5, LOBBY.zBack + 1.12);
+
+  const end = signMesh(textSign([
+    { text: 'THANK YOU', font: `600 200px ${FONTS.SERIF}`, y: 190, color: '#f0e3c4', spacing: 40 },
+    { text: 'FOR VISITING THE EXHIBITION', font: `500 64px ${FONTS.SERIF}`, y: 340, color: '#d4b47a', spacing: 20 },
+    { text: '인덕대학교 졸업 작품 전시회 · 2026', font: `400 54px ${FONTS.SANS}`, y: 450, color: '#bfae8c', spacing: 8 },
+  ], { w: 2048, h: 540 }), 6.4, 6.4 * 540 / 2048, hallGroup);
+  end.position.set(0, 3.4, HALL.zEnd + 0.08);
+}
+
+/* =====================================================================
+ *  갤러리 대문 (원목 양문)
+ * ===================================================================== */
+const doorMat = new THREE.MeshStandardMaterial({ map: classicDoorTexture(), roughness: 0.65, metalness: 0.05 });
 const doorPivots = [-1, 1].map((s) => {
   const pivot = new THREE.Group();
-  pivot.position.set(s * DOOR.w / 2, 0, LOBBY.zBack);
+  pivot.position.set(s * DOOR.w / 2, 0, LOBBY.zBack + 0.1);
   scene.add(pivot);
-  const panel = new THREE.Mesh(new THREE.BoxGeometry(DOOR.w / 2, DOOR.h, 0.16), [M.darkMetal, M.darkMetal, M.darkMetal, M.darkMetal, doorMat, doorMat]);
+  const panel = new THREE.Mesh(new THREE.BoxGeometry(DOOR.w / 2, DOOR.h, 0.14), [M.darkWood, M.darkWood, M.darkWood, M.darkWood, doorMat, doorMat]);
   panel.position.set(-s * DOOR.w / 4, DOOR.h / 2, 0);
   pivot.add(panel);
-  // 손잡이
-  const handle = box(0.06, 0.9, 0.08, M.gold, -s * (DOOR.w / 2 - 0.25), DOOR.h / 2 - 0.4, 0.13, pivot);
-  handle.userData.side = s;
+  const ringHandle = new THREE.Mesh(new THREE.TorusGeometry(0.1, 0.018, 8, 24), M.brass);
+  ringHandle.position.set(-s * (DOOR.w / 2 - 0.3), DOOR.h / 2 - 0.3, 0.1);
+  pivot.add(ringHandle);
   return { pivot, s };
 });
-// 문틀
-for (const [w, h, x, y] of [
-  [0.22, DOOR.h + 0.22, -DOOR.w / 2 - 0.11, DOOR.h / 2 + 0.11],
-  [0.22, DOOR.h + 0.22, DOOR.w / 2 + 0.11, DOOR.h / 2 + 0.11],
-  [DOOR.w + 0.44, 0.22, 0, DOOR.h + 0.11],
-]) box(w, h, 0.7, M.gold, x, y, LOBBY.zBack);
-// 문 너머 황금빛
-const doorLight = new THREE.PointLight(0xffc27a, 0, 30, 1.4);
-doorLight.position.set(0, 3.2, LOBBY.zBack - 2.5);
-scene.add(doorLight);
-const lightSpill = plane(DOOR.w + 2, 12, new THREE.MeshBasicMaterial({ map: (() => {
-  const c = document.createElement('canvas');
-  c.width = 64; c.height = 256;
-  const g = c.getContext('2d');
-  const grd = g.createLinearGradient(0, 0, 0, 256);
-  grd.addColorStop(0, 'rgba(255,200,120,1)');
-  grd.addColorStop(1, 'rgba(255,200,120,0)');
-  g.fillStyle = grd;
-  g.fillRect(0, 0, 64, 256);
-  const hg = g.createLinearGradient(0, 0, 64, 0);
-  g.globalCompositeOperation = 'destination-in';
-  hg.addColorStop(0, 'rgba(0,0,0,0)'); hg.addColorStop(0.25, 'rgba(0,0,0,1)'); hg.addColorStop(0.75, 'rgba(0,0,0,1)'); hg.addColorStop(1, 'rgba(0,0,0,0)');
-  g.fillStyle = hg;
-  g.fillRect(0, 0, 64, 256);
-  const t = new THREE.CanvasTexture(c); t.colorSpace = THREE.SRGBColorSpace; return t;
-})(), transparent: true, opacity: 0, blending: THREE.AdditiveBlending, depthWrite: false, toneMapped: false }));
-lightSpill.rotation.x = -Math.PI / 2;
-lightSpill.position.set(0, 0.02, LOBBY.zBack + 6.2);
 
 /* =====================================================================
- *  [Scene 4] 내부 갤러리 회랑 + 액자
+ *  작품 회랑 — 다마스크 벽, 흰 징두리 판넬, 천창
  * ===================================================================== */
 const hallGroup = new THREE.Group();
 scene.add(hallGroup);
@@ -587,126 +469,221 @@ scene.add(hallGroup);
   const { x: HX, zStart: ZS, zEnd: ZE, h: H } = HALL;
   const D = ZS - ZE;
   const cz = (ZS + ZE) / 2;
-  const lw = plane(D, H, M.hallWall, hallGroup);
-  lw.rotation.y = Math.PI / 2;
-  lw.position.set(-HX, H / 2, cz);
-  const rw = plane(D, H, M.hallWall, hallGroup);
-  rw.rotation.y = -Math.PI / 2;
-  rw.position.set(HX, H / 2, cz);
-  const ew = plane(HX * 2, H, M.hallWall, hallGroup);
+  const wallMat = M.damask.clone();
+  wallMat.map = M.damask.map.clone();
+  wallMat.map.needsUpdate = true;
+  wallMat.map.repeat.set(D / 1.2, (H - 1.1) / 1.2);
+  for (const s of [-1, 1]) {
+    const w = plane(D, H - 1.1, wallMat, hallGroup);
+    w.rotation.y = -s * Math.PI / 2;
+    w.position.set(s * HX, 1.1 + (H - 1.1) / 2, cz);
+    box(0.06, 1.1, D, M.panelWhite, s * (HX - 0.03), 0.55, cz, hallGroup);
+    for (let z = ZS - 0.8; z > ZE + 0.5; z -= 1.6) box(0.02, 0.62, 1.2, M.stoneShade, s * (HX - 0.065), 0.58, z - 0.8, hallGroup);
+    box(0.12, 0.06, D, M.gold, s * (HX - 0.06), 1.12, cz, hallGroup);
+    box(0.12, 0.16, D, M.darkWood, s * (HX - 0.06), 0.08, cz, hallGroup);
+    box(0.32, 0.26, D, M.panelWhite, s * (HX - 0.16), H - 0.13, cz, hallGroup);
+    box(0.14, 0.06, D, M.gold, s * (HX - 0.07), H - 0.32, cz, hallGroup);
+    // 그림 거는 레일
+    box(0.04, 0.04, D, M.brass, s * (HX - 0.03), H - 0.45, cz, hallGroup);
+  }
+  // 끝 벽 (아치 장식)
+  const ew = plane(HX * 2, H, M.damask.clone(), hallGroup);
+  ew.material.map = M.damask.map.clone();
+  ew.material.map.needsUpdate = true;
+  ew.material.map.repeat.set((HX * 2) / 1.2, H / 1.2);
   ew.position.set(0, H / 2, ZE);
-  const ceil = plane(HX * 2, D, M.ceiling, hallGroup);
+  box(HX * 2, 1.1, 0.06, M.panelWhite, 0, 0.55, ZE + 0.03, hallGroup);
+  box(HX * 2, 0.06, 0.12, M.gold, 0, 1.12, ZE + 0.06, hallGroup);
+  // 입구 쪽 벽 (문 개구부)
+  const side = HX - DOOR.w / 2;
+  for (const s of [-1, 1]) {
+    const p = plane(side, H, M.damask, hallGroup);
+    p.position.set(s * (DOOR.w / 2 + side / 2), H / 2, ZS);
+    p.rotation.y = Math.PI;
+  }
+
+  // 천장 + 중앙 천창(라이트 박스)
+  const ceilMat = M.ceiling.clone();
+  ceilMat.map = M.ceiling.map.clone();
+  ceilMat.map.needsUpdate = true;
+  ceilMat.map.repeat.set((HX * 2) / 2.4, D / 2.4);
+  const ceil = plane(HX * 2, D, ceilMat, hallGroup);
   ceil.rotation.x = Math.PI / 2;
   ceil.position.set(0, H, cz);
-  // 하부 웨인스코팅 + 금색 몰딩
-  for (const s of [-1, 1]) {
-    box(0.06, 0.95, D, M.hallWainscot, s * (HX - 0.03), 0.475, cz, hallGroup);
-    box(0.08, 0.04, D, M.gold, s * (HX - 0.05), 0.97, cz, hallGroup);
-    box(0.08, 0.05, D, M.gold, s * (HX - 0.05), H - 0.35, cz, hallGroup);
-    box(0.2, 0.05, D, M.stripWarm, s * (HX - 0.35), H - 0.03, cz, hallGroup); // 코브 조명
-  }
-  box(0.3, 0.04, D - 2, M.stripWarm, 0, H - 0.02, cz, hallGroup);
-  // 따뜻한 보조광
-  for (let z = ZS - 4; z > ZE; z -= 12) {
-    const pl = new THREE.PointLight(0xffb36b, 14, 16, 1.5);
-    pl.position.set(0, H - 0.6, z);
-    hallGroup.add(pl);
+  const sky = plane(3.2, D - 4, new THREE.MeshBasicMaterial({ color: new THREE.Color(0.72, 0.68, 0.6), toneMapped: false }), hallGroup);
+  sky.rotation.x = Math.PI / 2;
+  sky.position.set(0, H - 0.02, cz);
+  for (let z = ZS - 2; z > ZE + 2; z -= 1.6) box(3.3, 0.08, 0.08, M.gold, 0, H - 0.05, z, hallGroup);
+  for (const s of [-1, 1]) box(0.1, 0.1, D - 4, M.gold, s * 1.65, H - 0.06, cz, hallGroup);
+
+  // 벤치 (짝 사이마다)
+  for (let k = 0; k < PAIRS - 1; k++) {
+    const z = HALL.firstZ - k * PAIR_GAP - PAIR_GAP / 2;
+    box(1.0, 0.16, 2.6, M.velvet, 0, 0.5, z, hallGroup);
+    box(1.06, 0.06, 2.66, M.darkWood, 0, 0.4, z, hallGroup);
+    for (const dx of [-0.42, 0.42]) for (const dz of [-1.15, 1.15]) box(0.08, 0.38, 0.08, M.darkWood, dx, 0.19, z + dz, hallGroup);
   }
 }
-const hallDust = makeDust(500, (v) => v.set((Math.random() - 0.5) * 9, Math.random() * 6, HALL.zStart - Math.random() * (HALL.zStart - HALL.zEnd)), new THREE.Color(1.2, 0.9, 0.5), 30);
 
-const paintings = []; // { mesh, work, index, normal, center, w, h }
+/* --- 액자 + 그림 + 명패 + 그림 조명 + 관람 차단줄 --- */
+const paintings = [];
+function paintingTexture(work) {
+  if (work.image) {
+    const holder = { tex: null, ready: false, onLoad: null };
+    holder.tex = loadTex(work.image, () => holder.onLoad && holder.onLoad());
+    return holder;
+  }
+  const c = paintPlaceholder(Number(work.no), { width: 768 });
+  const tex = new THREE.CanvasTexture(c);
+  tex.colorSpace = THREE.SRGBColorSpace;
+  tex.anisotropy = ANISO;
+  return { tex, ready: true };
+}
+
+function stanchionRope(parent, z0, z1, x) {
+  for (const z of [z0, z1]) {
+    cyl(0.03, 0.03, 0.95, M.brass, x, 0.475, z, parent, 12);
+    cyl(0.16, 0.18, 0.04, M.brass, x, 0.02, z, parent, 24);
+    const knob = new THREE.Mesh(new THREE.SphereGeometry(0.055, 12, 8), M.brass);
+    knob.position.set(x, 0.98, z);
+    parent.add(knob);
+  }
+  const pts = [];
+  for (let i = 0; i <= 16; i++) {
+    const t = i / 16;
+    pts.push(new THREE.Vector3(x, 0.9 - Math.sin(t * Math.PI) * 0.16, lerp(z0, z1, t)));
+  }
+  const rope = new THREE.Mesh(new THREE.TubeGeometry(new THREE.CatmullRomCurve3(pts), 24, 0.022, 8), M.velvet);
+  parent.add(rope);
+}
+
 function buildFrame(work, index) {
-  const tex = loadTex(work.image);
+  const texInfo = paintingTexture(work);
+  const { tex, ready } = texInfo;
   const side = FRAME_SIDE(index);
   const z = FRAME_Z(index);
   const group = new THREE.Group();
-  group.position.set(side * (HALL.x - 0.02), 2.45, z);
+  group.position.set(side * (HALL.x - 0.02), FRAME_Y, z);
   group.rotation.y = side < 0 ? Math.PI / 2 : -Math.PI / 2;
   hallGroup.add(group);
 
-  const mat = createPaintingMaterial(tex, 1.5);
-  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 128, 96), mat);
-  mesh.position.z = 0.1;
+  const mat = createPaintingMaterial(tex, 1.33);
+  mat.toneMapped = false;
+  const mesh = new THREE.Mesh(new THREE.PlaneGeometry(1, 1, 96, 72), mat);
+  mesh.position.z = 0.075;
   group.add(mesh);
-  const liner = plane(1, 1, new THREE.MeshStandardMaterial({ color: 0x0d0b09, roughness: 0.7 }), group);
-  liner.position.z = 0.08;
-  const molding = new THREE.Mesh(new THREE.BufferGeometry(), M.gold);
-  group.add(molding);
-  const plaque = plane(1.25, 1.25 * 340 / 1024, new THREE.MeshStandardMaterial({ map: plaqueTexture(work), roughness: 0.35, metalness: 0.4, envMap: envTex, envMapIntensity: 0.5 }), group);
-  // 그림 조명 (picture light)
+  const frameHolder = new THREE.Group();
+  group.add(frameHolder);
+
+  // 벽 옆 작은 명패
+  const plaque = plane(0.66, 0.66 * 340 / 1024, new THREE.MeshStandardMaterial({ map: plaqueTexture(work), roughness: 0.6 }), group);
+  // 그림 조명 (황동 픽처 라이트)
   const lamp = new THREE.Group();
   group.add(lamp);
-  box(1.2, 0.07, 0.07, M.gold, 0, 0, 0.32, lamp);
-  box(0.04, 0.04, 0.3, M.gold, 0, 0.03, 0.15, lamp);
-  const lampGlow = box(1.1, 0.012, 0.03, M.stripWarm, 0, -0.04, 0.33, lamp);
-  lampGlow.material = M.stripWarm;
+  box(0.9, 0.06, 0.08, M.brass, 0, 0, 0.36, lamp);
+  box(0.03, 0.03, 0.34, M.brass, 0, 0.04, 0.17, lamp);
+  box(0.8, 0.01, 0.04, M.glowSoft, 0, -0.035, 0.37, lamp);
 
-  const spot = new THREE.SpotLight(0xffe3b8, 0, 11, 0.36, 0.65, 1.4);
+  const spot = new THREE.SpotLight(0xffe9c9, 0, 9, 0.42, 0.75, 1.6);
   const spotTarget = new THREE.Object3D();
   group.add(spotTarget);
   spot.target = spotTarget;
+  spot.position.set(side * (HALL.x - 2.6), HALL.h - 0.4, z);
   scene.add(spot);
-  spot.position.set(side * (HALL.x - 3.2), HALL.h - 0.3, z);
-  spotTarget.position.set(0, -0.1, 0);
 
-  const P = { mesh, work, index, group, w: 1, h: 1, spot, mat };
+  // 관람 차단줄 (액자 앞 1m)
+  stanchionRope(hallGroup, z - 1.7, z + 1.7, side * (HALL.x - 1.1));
+
+  const P = { mesh, work, index, group, w: 1, h: 1, ow: 1, oh: 1, spot, mat, side, z };
   mesh.userData.workIndex = index;
   paintings.push(P);
 
-  const layout = () => {
+  P.layout = () => {
     const img = tex.image;
-    const a = img && img.width ? img.width / img.height : 1.5;
-    let w = 3.7, h = w / a;
-    if (h > 2.45) { h = 2.45; w = h * a; }
+    const a = img && img.width ? img.width / img.height : 4 / 3;
+    let w = 2.7, h = w / a;
+    if (h > 2.25) { h = 2.25; w = h * a; }
     P.w = w; P.h = h;
     mesh.scale.set(w, h, 1);
     mat.uniforms.uAspect.value = a;
-    liner.scale.set(w + 0.18, h + 0.18, 1);
-    const ow = w + 0.62, oh = h + 0.62, iw = w + 0.16, ih = h + 0.16;
-    const shape = new THREE.Shape();
-    shape.moveTo(-ow / 2, -oh / 2); shape.lineTo(ow / 2, -oh / 2); shape.lineTo(ow / 2, oh / 2); shape.lineTo(-ow / 2, oh / 2); shape.lineTo(-ow / 2, -oh / 2);
-    const hole = new THREE.Path();
-    hole.moveTo(-iw / 2, -ih / 2); hole.lineTo(-iw / 2, ih / 2); hole.lineTo(iw / 2, ih / 2); hole.lineTo(iw / 2, -ih / 2); hole.lineTo(-iw / 2, -ih / 2);
-    shape.holes.push(hole);
-    molding.geometry.dispose();
-    molding.geometry = new THREE.ExtrudeGeometry(shape, { depth: 0.08, bevelEnabled: true, bevelThickness: 0.05, bevelSize: 0.05, bevelSegments: 3 });
-    plaque.position.set(0, -oh / 2 - 0.42, 0.02);
-    lamp.position.set(0, oh / 2 + 0.22, 0);
+    frameHolder.clear();
+    const f = buildFrameSet(frameHolder, w, h, { outer: 0.24, mat: 0.12 });
+    P.ow = f.ow; P.oh = f.oh;
+    if (plaque.material.map) plaque.material.map.dispose();
+    plaque.material.map = plaqueTexture(work);
+    plaque.material.needsUpdate = true;
+    plaque.position.set(f.ow / 2 + 0.55, 1.45 - FRAME_Y, 0.01);
+    lamp.position.set(0, f.oh / 2 + 0.12, 0);
+    spotTarget.position.set(0, -0.15, 0);
+    buildKeys();
   };
-  P.layout = layout;
+  if (ready) P.layout();
+  else texInfo.onLoad = () => P.layout();
   return P;
 }
-WORKS.forEach((w, i) => buildFrame(w, i));
 
 /* =====================================================================
- *  조명
+ *  조명 — 따뜻하고 부드러운 미술관 조명 (강한 하이라이트 없음)
  * ===================================================================== */
-const hemi = new THREE.HemisphereLight(0x9fb2d8, 0x120f10, 0.9);
+const hemi = new THREE.HemisphereLight(0xfff2de, 0x3a3025, 1.35);
 scene.add(hemi);
-const lobbyFill = [];
-for (const [x, z] of [[-7, 9], [7, 9], [-7, -6], [7, -6]]) {
-  const s = new THREE.SpotLight(0xdfe8ff, 90, 16, 0.75, 0.9, 1.5);
-  s.position.set(x, LOBBY.h - 0.3, z);
-  s.target.position.set(x * 1.35, 2, z);
-  scene.add(s, s.target);
-  lobbyFill.push(s);
+const lobbyLights = [];
+for (const [x, z] of [[-6, 8], [6, 8], [-6, -6], [6, -6], [0, 2.6]]) {
+  const l = new THREE.PointLight(0xffe4bd, 20, 0, 2);
+  l.position.set(x, LOBBY.h - 2.2, z);
+  scene.add(l);
+  lobbyLights.push(l);
+}
+const heroSpot = new THREE.SpotLight(0xfff3e2, 70, 0, 0.42, 0.8, 2);
+heroSpot.position.set(0, LOBBY.h - 0.3, 7.5);
+heroSpot.target.position.set(0, 2.8, 2.6);
+scene.add(heroSpot, heroSpot.target);
+const filmLight = new THREE.SpotLight(0xffe7c4, 30, 0, 0.6, 0.9, 2);
+filmLight.position.set(-LOBBY.x + 4.5, LOBBY.h - 0.3, VIDEO.z);
+filmLight.target.position.set(-LOBBY.x, VIDEO.y, VIDEO.z);
+scene.add(filmLight, filmLight.target);
+const hallLights = [];
+for (let z = HALL.zStart - 5; z > HALL.zEnd; z -= 12) {
+  const l = new THREE.PointLight(0xffe2b6, 16, 0, 2);
+  l.position.set(0, HALL.h - 0.8, z);
+  scene.add(l);
+  hallLights.push(l);
 }
 
+
 /* =====================================================================
- *  카메라 키프레임 (p = 스크롤 진행도)
+ *  카메라 키프레임 — 액자 크기와 화면비에 맞춰 거리를 자동 계산
  * ===================================================================== */
-const K = [
-  { p: 0, pos: [0, 2.5, 9.6], yaw: 0, pitch: 0.03 },
-  { p: 1, pos: [0, 4.3, -1.8], yaw: 0, pitch: 0.0 }, // 16:9 대형 스크린 정면 100% 영화관 뷰 (검은 네모 및 잘림 완전 제거)
-  { p: 1.55, pos: [0, 2.7, -4.5], yaw: 0, pitch: 0.04 },
-  { p: 2, pos: [0, 2.25, -9.2], yaw: 0, pitch: 0.0 },
-];
-WORKS.forEach((_, i) => {
-  const s = FRAME_SIDE(i);
-  K.push({ p: STOP_FIRST_WORK + i, pos: [-s * 1.1, 2.4, FRAME_Z(i)], yaw: s < 0 ? Math.PI / 2 : -Math.PI / 2, pitch: 0.0 });
-});
-K.push({ p: MAX_STOP, pos: [0, 2.6, HALL.zEnd + 8.5], yaw: 0, pitch: 0.035 });
+const K = [];
+/** 대상(가로 w, 세로 h)이 화면의 fillW / fillH 비율을 넘지 않게 하는 거리 */
+function fitDistance(w, h, fillW = 0.62, fillH = 0.6) {
+  const tanV = Math.tan(THREE.MathUtils.degToRad(BASE_FOV) / 2);
+  const dH = h / (2 * tanV * fillH);
+  const dW = w / (2 * tanV * camera.aspect * fillW);
+  return Math.max(dH, dW);
+}
+function buildKeys() {
+  K.length = 0;
+  // 0) 로비 — 조각상과 갤러리 포털이 한눈에
+  K.push({ p: 0, pos: [0, 2.7, 12.2], yaw: 0, pitch: 0.06 });
+  // 조각상을 피해 왼쪽으로 돌아 영상 액자로
+  K.push({ p: 0.5, pos: [-4.2, 2.9, 5.5], yaw: 0.75, pitch: 0.02 });
+  // 1) 영상 액자 정면 — 액자 전체가 여유 있게 들어오는 거리
+  const filmD = clamp(fitDistance(VIDEO.w + 0.9, VIDEO.h + 2.2, 0.66, 0.66), 5, LOBBY.x * 2 - 1.5);
+  K.push({ p: 1, pos: [-LOBBY.x + filmD, VIDEO.y - 0.35, VIDEO.z], yaw: Math.PI / 2, pitch: -0.03 });
+  // 2) 갤러리 문 앞
+  K.push({ p: 2, pos: [0, 2.6, -2.2], yaw: 0, pitch: 0.06 });
+  // 3~) 작품 하나하나
+  paintings.forEach((P, i) => {
+    const d = clamp(fitDistance(P.ow + 1.6, P.oh + 0.6, 0.6, 0.5), 3.2, HALL.x * 2 - 1.2);
+    const s = P.side;
+    K.push({ p: STOP_FIRST_WORK + i, pos: [s * (HALL.x - d), 2.15, P.z], yaw: s < 0 ? Math.PI / 2 : -Math.PI / 2, pitch: 0.06 });
+  });
+  // FIN — 회랑 끝 감사 인사
+  K.push({ p: MAX_STOP, pos: [0, 2.6, HALL.zEnd + 14], yaw: 0, pitch: 0.05 });
+}
+WORKS.forEach((w, i) => buildFrame(w, i));
+buildKeys();
 
 function cameraAt(pe, out) {
   let a = K[0], b = K[K.length - 1];
@@ -715,10 +692,11 @@ function cameraAt(pe, out) {
   }
   const t = b.p === a.p ? 0 : clamp((pe - a.p) / (b.p - a.p), 0, 1);
   out.pos.set(lerp(a.pos[0], b.pos[0], t), lerp(a.pos[1], b.pos[1], t), lerp(a.pos[2], b.pos[2], t));
-  out.yaw = lerp(a.yaw, b.yaw, t);
+  let dy = b.yaw - a.yaw;
+  out.yaw = a.yaw + dy * t;
   out.pitch = lerp(a.pitch, b.pitch, t);
-  // 액자 사이 이동 시 살짝 뒤로 빠졌다가 다가감 (돌리 줌 느낌)
-  if (a.p >= STOP_FIRST_WORK - 1 && b.p <= MAX_STOP) out.pos.y += Math.sin(t * Math.PI) * 0.12;
+  // 같은 위치에서 반대편 벽으로 돌아설 때 살짝 뒤로 물러나 회랑을 바라봄
+  if (a.p >= STOP_FIRST_WORK && b.p < MAX_STOP) out.pos.x *= 1 - Math.sin(t * Math.PI) * 0.6;
   return out;
 }
 const easeStops = (p) => Math.floor(p) + easeInOut(p - Math.floor(p));
@@ -739,7 +717,6 @@ const state = {
   hovered: null,
   warping: false,
   warp: null,
-  prevBeam: 0,
   prevDoor: 0,
   activeStop: -1,
 };
@@ -748,8 +725,6 @@ const state = {
   if (m) state.p = state.target = clamp(STOP_FIRST_WORK + Number(m[1]) - 1, 0, MAX_STOP);
   else if (location.hash === '#gallery') state.p = state.target = 2;
   if (params.has('p')) state.p = state.target = clamp(parseFloat(params.get('p')), 0, MAX_STOP);
-  // 이전 상태로 복귀 시 문/스크린 효과음이 재생되지 않도록
-  state.prevBeam = state.p > 0.6 ? 1 : 0;
   state.prevDoor = state.p > 1.5 ? 1 : 0;
 }
 
@@ -771,23 +746,21 @@ function renderPlacard(i) {
   ui.placard.querySelector('.pl-no').textContent = `No.${w.no} / ${String(WORKS.length).padStart(2, '0')}`;
   ui.placard.querySelector('.pl-en').textContent = w.en;
   ui.placard.querySelector('.pl-title').textContent = w.title;
-  ui.placard.querySelector('.pl-genre').textContent = w.genre;
+  ui.placard.querySelector('.pl-genre').textContent = `${w.student} · ${w.genre}`;
   ui.placard.querySelector('.pl-desc').textContent = w.desc;
   ui.placard.querySelector('.pl-tags').innerHTML = w.tags.map((t) => `<span>${t}</span>`).join('');
   ui.placard.dataset.side = FRAME_SIDE(i) < 0 ? 'right' : 'left';
 }
 
-const diveBtn = document.querySelector('#diveBtn');
+const diveBtn = $('#diveBtn');
 if (diveBtn) {
   diveBtn.addEventListener('click', () => {
     const idx = state.activeStop - STOP_FIRST_WORK;
-    if (paintings[idx] && !state.warping) {
-      startWarp(paintings[idx], new THREE.Vector2(0.5, 0.5));
-    }
+    if (paintings[idx] && !state.warping) startWarp(paintings[idx], new THREE.Vector2(0.5, 0.5));
   });
 }
-const reelPrev = document.querySelector('#reelPrev');
-const reelNext = document.querySelector('#reelNext');
+const reelPrev = $('#reelPrev');
+const reelNext = $('#reelNext');
 if (reelPrev) reelPrev.addEventListener('click', () => { loadReel(reelIndex - 1); if (state.videoWanted) video.play().catch(() => {}); });
 if (reelNext) reelNext.addEventListener('click', () => { loadReel(reelIndex + 1); if (state.videoWanted) video.play().catch(() => {}); });
 document.querySelectorAll('[data-goto]').forEach((btn) => {
@@ -843,23 +816,18 @@ addEventListener('keydown', (e) => {
   if (e.key === 'Enter' && state.activeStop >= STOP_FIRST_WORK && state.activeStop < MAX_STOP) startWarp(paintings[state.activeStop - STOP_FIRST_WORK], new THREE.Vector2(0.5, 0.5));
 });
 
-/* --- 포인터: 패럴랙스 + 액자 호버 + 클릭 --- */
 const raycaster = new THREE.Raycaster();
-const ndc = new THREE.Vector2();
 addEventListener('pointermove', (e) => {
   state.mouse.set((e.clientX / innerWidth) * 2 - 1, -(e.clientY / innerHeight) * 2 + 1);
   ui.cursor.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
 });
 
 function pickPainting() {
-  ndc.copy(state.mouse);
-  raycaster.setFromCamera(ndc, camera);
+  raycaster.setFromCamera(state.mouse, camera);
   const targets = paintings.map((p) => p.mesh);
-  if (state.p < 1.0 && heroSculpture) {
-    heroSculpture.traverse((c) => { if (c.isMesh) targets.push(c); });
-  }
-  const hit = raycaster.intersectObjects(targets, true)[0];
-  if (!hit || hit.distance > 16) return null;
+  if (state.p < 0.6 && heroSculpture) heroSculpture.traverse((c) => { if (c.isMesh) targets.push(c); });
+  const hit = raycaster.intersectObjects(targets, false)[0];
+  if (!hit || hit.distance > 14) return null;
   return hit;
 }
 
@@ -871,12 +839,15 @@ canvas.addEventListener('click', () => {
     goTo(1);
   } else {
     const P = paintings.find((p) => p.mesh === hit.object);
-    if (P) startWarp(P, hit.uv);
+    if (!P) return;
+    // 멀리 있는 액자는 먼저 그 앞으로 걸어가고, 정면일 때 클릭하면 입장
+    if (state.activeStop !== STOP_FIRST_WORK + P.index) goTo(STOP_FIRST_WORK + P.index);
+    else startWarp(P, hit.uv);
   }
 });
 
 /* =====================================================================
- *  [Scene 5] 마리오64 워프 — 클로즈업 → 출렁임 → 페이지 이동
+ *  액자 입장 — 그림 앞으로 다가가며 잔잔한 물결 → 작품 페이지
  * ===================================================================== */
 function startWarp(P, uv) {
   state.warping = true;
@@ -886,19 +857,16 @@ function startWarp(P, uv) {
   const fov = THREE.MathUtils.degToRad(camera.fov);
   const fitH = (P.h / 2) / Math.tan(fov / 2);
   const fitW = (P.w / 2) / (Math.tan(fov / 2) * camera.aspect);
-  const close = Math.max(fitH, fitW) * 0.98;
-  const yaw = Math.atan2(-normal.x, -normal.z) + Math.PI;
   state.warp = {
     P,
     t0: performance.now(),
     from: { pos: camera.position.clone(), yaw: camera.rotation.y, pitch: camera.rotation.x },
     center,
     normal,
-    close,
+    close: Math.max(fitH, fitW) * 1.02,
     yaw: Math.atan2(normal.x, normal.z),
     navigated: false,
   };
-  void yaw;
   P.mat.uniforms.uClick.value.copy(uv || new THREE.Vector2(0.5, 0.5));
   P.mat.uniforms.uClickT.value = 0;
   ui.warp.style.setProperty('--accent', P.work.accent);
@@ -912,23 +880,21 @@ function updateWarp(now) {
   const t = (now - W.t0) / 1000;
   const P = W.P;
   P.mat.uniforms.uClickT.value = t;
-  P.mat.uniforms.uWarp.value = smooth(0.7, 2.0, t);
-  // 1) 클로즈업
-  const k = easeInOut(clamp(t / 1.15, 0, 1));
-  // 2) 그림 표면 속으로 다이빙
-  const dive = easeInOut(clamp((t - 1.25) / 1.0, 0, 1));
-  const dist = lerp(W.close, 0.18, dive);
+  P.mat.uniforms.uWarp.value = smooth(0.9, 2.0, t) * 0.6;
+  const k = easeInOut(clamp(t / 1.2, 0, 1));
+  const dive = easeInOut(clamp((t - 1.3) / 0.9, 0, 1));
+  const dist = lerp(W.close, 0.3, dive);
   const target = W.center.clone().addScaledVector(W.normal, dist);
   camera.position.lerpVectors(W.from.pos, target, k);
   let dy = W.yaw - W.from.yaw;
   dy = Math.atan2(Math.sin(dy), Math.cos(dy));
   camera.rotation.y = W.from.yaw + dy * k;
   camera.rotation.x = lerp(W.from.pitch, 0, k);
-  camera.rotation.z = Math.sin(t * 6) * 0.012 * smooth(0.9, 1.8, t);
-  camera.fov = lerp(42, 30, dive);
+  camera.rotation.z = 0;
+  camera.fov = lerp(BASE_FOV, 34, dive);
   camera.updateProjectionMatrix();
-  if (t > 1.55) document.body.classList.add('warp-flash');
-  if (t > 2.45 && !W.navigated) {
+  if (t > 1.6) document.body.classList.add('warp-flash');
+  if (t > 2.4 && !W.navigated) {
     W.navigated = true;
     location.href = P.work.url;
   }
@@ -942,15 +908,12 @@ function resetWarp() {
   }
   state.warp = null;
   state.warping = false;
-  camera.fov = 42;
+  camera.fov = BASE_FOV;
   camera.rotation.z = 0;
   camera.updateProjectionMatrix();
   document.body.classList.remove('is-warping', 'warp-flash');
 }
-// 뒤로가기로 돌아왔을 때 (bfcache) 워프 상태 해제
-addEventListener('pageshow', (e) => {
-  if (e.persisted) resetWarp();
-});
+addEventListener('pageshow', (e) => { if (e.persisted) resetWarp(); });
 
 /* =====================================================================
  *  메인 루프
@@ -963,79 +926,38 @@ function update() {
   const time = clock.elapsedTime;
   const now = performance.now();
 
-  // 스크롤 스냅
   if (!state.warping && now - state.lastWheel > 240) {
     const snap = Math.round(state.target);
     state.target = damp(state.target, snap, 7, dt);
     if (Math.abs(state.target - snap) < 0.001) state.target = snap;
   }
-  state.p = damp(state.p, state.target, 3.2, dt);
+  state.p = damp(state.p, state.target, 3.0, dt);
   const pe = easeStops(state.p);
 
-  // ---- 시퀀스 파라미터
-  const heroSink = smooth(0.12, 0.8, pe);
-  const dim = smooth(0.15, 0.7, pe);
-  const beamOn = smooth(0.4, 0.85, pe) * (1 - smooth(1.08, 1.32, pe));
-  const screenOn = smooth(0.5, 0.92, pe) * (1 - smooth(1.12, 1.34, pe));
-  const roll = smooth(1.22, 1.55, pe);
-  const doorOpen = smooth(1.42, 1.92, pe);
-  const inHall = smooth(1.7, 2.4, pe);
-
-  // ---- 히어로 3D 조각상
-  heroFloat.position.y = 0.5 - heroSink * 6.0;
-  heroFloat.rotation.y = time * 0.18 + state.look.x * 0.12;
-  hero.position.y = -heroSink * 4.0;
-  hero.visible = heroSink < 0.92;
-  heroSpot.intensity = 14 * (1 - heroSink);
-  heroRimLight.intensity = 12 * (1 - heroSink);
-  jellyDust.forEach((d) => { d.material.uniforms.uOpacity.value = 0.9 * (1 - heroSink) + 0.05; });
-
-  // ---- 조명 (프로젝터가 켜지면 어두워짐)
-  const lobbyLevel = 1 - dim * 0.82 + doorOpen * 0.15;
-  hemi.intensity = 0.55 * lobbyLevel + 0.12;
-  lobbyFill.forEach((s) => (s.intensity = 90 * lobbyLevel));
-  M.stripCool.color.setRGB(1.6, 1.8, 2.2).multiplyScalar(0.25 + 0.75 * lobbyLevel);
-
-  // ---- 프로젝터
-  beamMat.uniforms.uOpacity.value = beamOn;
-  beamCoreMat.uniforms.uOpacity.value = beamOn * 0.8;
-  beam.visible = beamCore.visible = beamOn > 0.001;
-  beamDust.material.uniforms.uOpacity.value = beamOn * 0.85;
-  lensFlare.material.opacity = beamOn;
-  lensFlare.scale.setScalar(2.0 + Math.sin(time * 30) * 0.03);
-  projector.userData.glass.material.color.setRGB(0.1 + beamOn * 3, 0.1 + beamOn * 3.2, 0.15 + beamOn * 3.6);
-  projector.userData.led.material.color.setRGB(beamOn > 0.1 ? 0.2 : 2, beamOn > 0.1 ? 2.5 : 0.1, 0.1);
-  screenMat.uniforms.uOn.value = screenOn;
-  screenLight.intensity = 0; // 영상 표면에 불필요한 인공광을 배제하여 원본 색감 유지
-  audio.setProjector(beamOn);
-  if (beamOn > 0.15 && state.prevBeam <= 0.15) audio.click();
-  state.prevBeam = beamOn;
-
-  // 비디오 재생 제어
-  const wantVideo = screenOn > 0.02 && !document.hidden;
+  // ---- 영상: 영상 액자 근처에서만 재생
+  const screenOn = 1 - smooth(0.25, 0.75, Math.abs(pe - 1));
+  screenMat.uniforms.uOn.value = Math.max(screenOn, 0.0);
+  const wantVideo = screenOn > 0.02 && !document.hidden && state.started;
   if (wantVideo !== state.videoWanted) {
     state.videoWanted = wantVideo;
-    if (wantVideo) video.play().catch(() => {});
+    if (wantVideo) { video.play().catch(() => {}); audio.click(); }
     else video.pause();
   }
   video.volume = clamp(screenOn, 0, 1);
 
-  // ---- 스크린 롤업 & 문
-  screenGroup.scale.y = Math.max(0.0001, 1 - roll);
-  screenRod.position.y = SCREEN.top - (SCREEN.h + 0.15) * (1 - roll) - 0.02;
-  doorPivots.forEach(({ pivot, s }) => { pivot.rotation.y = -s * doorOpen * 1.72; });
-  doorLight.intensity = 60 * doorOpen;
-  doorMat.emissiveIntensity = 0.25 + doorOpen * 0.9 + (1 - doorOpen) * smooth(1.2, 1.42, pe) * 0.6;
-  lightSpill.material.opacity = doorOpen * 0.5 * (1 - inHall * 0.7);
+  // ---- 문
+  const doorOpen = smooth(1.45, 2.05, pe);
+  doorPivots.forEach(({ pivot, s }) => { pivot.rotation.y = -s * doorOpen * 1.6; });
   if (doorOpen > 0.02 && state.prevDoor <= 0.02) audio.door();
   state.prevDoor = doorOpen;
 
-  // ---- 갤러리
-  hallDust.material.uniforms.uOpacity.value = 0.25 + inHall * 0.6;
+  // ---- 갤러리 조명: 보고 있는 작품에 조금 더 빛
+  const inHall = smooth(1.8, 2.8, pe);
   paintings.forEach((P, i) => {
-    const focus = 1 - smooth(0, 1.2, Math.abs(pe - (STOP_FIRST_WORK + i)));
-    P.spot.intensity = (28 + focus * 70) * (0.25 + doorOpen * 0.75);
-    P.mat.uniforms.uLight.value = 0.62 + focus * 0.5;
+    const focus = 1 - smooth(0, 1.4, Math.abs(pe - (STOP_FIRST_WORK + i)));
+    P.spot.intensity = (14 + focus * 16) * (0.3 + inHall * 0.7);
+    P.mat.uniforms.uLight.value = 0.86 + focus * 0.08;
+    P.mat.uniforms.uTime.value = time;
   });
 
   // ---- 호버
@@ -1043,30 +965,21 @@ function update() {
     const hit = pickPainting();
     const obj = hit ? hit.object : null;
     if (obj !== state.hovered) {
-      if (obj) audio.blip(obj.userData && obj.userData.isHero ? 0.85 : 1 + ((obj.userData && obj.userData.workIndex) || 0) * 0.06);
+      if (obj) audio.blip(obj.userData && obj.userData.isHero ? 0.85 : 1 + ((obj.userData && obj.userData.workIndex) || 0) * 0.04);
       state.hovered = obj;
       document.body.classList.toggle('is-hover', !!obj);
-      if (obj) ui.cursorLabel.textContent = (obj.userData && obj.userData.isHero) ? 'EXPLORE EXHIBITION' : 'CLICK · DIVE IN';
+      if (obj) {
+        const isHero = obj.userData && obj.userData.isHero;
+        const near = !isHero && state.activeStop === STOP_FIRST_WORK + obj.userData.workIndex;
+        ui.cursorLabel.textContent = isHero ? '관람 시작' : near ? '작품 보러 가기' : '이 작품 앞으로';
+      }
     }
-    paintings.map((p) => p.mat).forEach((m) => {
-      const isHover = obj && obj.material === m;
+    paintings.forEach((p) => {
+      const m = p.mat;
+      const isHover = obj && obj === p.mesh;
       if (isHover) m.uniforms.uHover.value.lerp(hit.uv, 0.3);
       m.uniforms.uHoverAmp.value = damp(m.uniforms.uHoverAmp.value, isHover ? 1 : 0, 4, dt);
     });
-  }
-  paintings.map((p) => p.mat).forEach((m) => (m.uniforms.uTime.value = time));
-
-  // ---- 셰이더 시간
-  beamMat.uniforms.uTime.value = time;
-  beamCoreMat.uniforms.uTime.value = time;
-  screenMat.uniforms.uTime.value = time;
-  [beamDust, hallDust, ...jellyDust].forEach((d) => (d.material.uniforms.uTime.value = time));
-
-  // ---- 엔딩 땡큐 사인 (문 열릴 때는 안 보이고, 마지막 앨범에 도달했을 때만 비로소 점등)
-  if (endSignMesh) {
-    const endFocus = smooth(MAX_STOP - 0.7, MAX_STOP, pe);
-    endSignMesh.material.opacity = endFocus;
-    endSignMesh.visible = endFocus > 0.005;
   }
 
   // ---- 카메라
@@ -1074,26 +987,19 @@ function update() {
     updateWarp(now);
   } else {
     cameraAt(pe, camState);
-    if (pe < 1.4) {
-      // 첫 부분(로비)과 영상 틀어지는 부분은 마우스를 움직여도 화면이 흔들리지 않고 완전 고정
-      state.look.set(0, 0);
-    } else {
-      state.look.x = damp(state.look.x, Math.abs(state.mouse.x) <= 1 ? state.mouse.x : 0, 2.5, dt);
-      state.look.y = damp(state.look.y, Math.abs(state.mouse.y) <= 1 ? state.mouse.y : 0, 2.5, dt);
-    }
-    const breathe = Math.sin(time * 0.6) * 0.02;
+    const mx = Math.abs(state.mouse.x) <= 1 ? state.mouse.x : 0;
+    const my = Math.abs(state.mouse.y) <= 1 ? state.mouse.y : 0;
+    state.look.x = damp(state.look.x, mx, 2.2, dt);
+    state.look.y = damp(state.look.y, my, 2.2, dt);
     camera.position.copy(camState.pos);
-    camera.position.x += state.look.x * 0.25;
-    camera.position.y += state.look.y * 0.12 + breathe;
-    camera.rotation.y = camState.yaw - state.look.x * 0.045;
-    camera.rotation.x = camState.pitch + state.look.y * 0.03;
+    camera.position.y += Math.sin(time * 0.5) * 0.012;
+    camera.rotation.y = camState.yaw - state.look.x * 0.035;
+    camera.rotation.x = camState.pitch + state.look.y * 0.025;
     camera.rotation.z = 0;
   }
 
-  
-  // ---- UI
   updateUI(pe);
-  composer.render();
+  renderer.render(scene, camera);
   requestAnimationFrame(update);
 }
 
@@ -1128,8 +1034,7 @@ addEventListener('resize', () => {
   camera.aspect = innerWidth / innerHeight;
   camera.updateProjectionMatrix();
   renderer.setSize(innerWidth, innerHeight);
-  composer.setSize(innerWidth, innerHeight);
-  bloom.setSize(innerWidth, innerHeight);
+  buildKeys();
 });
 document.addEventListener('visibilitychange', () => { if (document.hidden) video.pause(); else if (state.videoWanted) video.play().catch(() => {}); });
 
@@ -1141,12 +1046,15 @@ manager.onProgress = (_, loaded, total) => {
   ui.bar.style.transform = `scaleX(${r})`;
   ui.pct.textContent = `${Math.round(r * 100)}%`;
 };
-const texturesReady = new Promise((res) => { manager.onLoad = res; });
+const assetsReady = Promise.race([
+  new Promise((res) => { manager.onLoad = res; }),
+  new Promise((res) => setTimeout(res, 12000)),
+]);
 const fontsReady = Promise.race([
   Promise.all([
     document.fonts.load(`600 100px 'Cormorant Garamond'`),
     document.fonts.load(`500 100px 'Space Grotesk'`),
-    document.fonts.load(`700 100px 'Noto Sans KR'`),
+    document.fonts.load(`500 100px 'Noto Sans KR'`),
     document.fonts.load(`400 100px 'Noto Sans KR'`),
   ]),
   new Promise((r) => setTimeout(r, 3500)),
@@ -1163,14 +1071,14 @@ function enter(withSound) {
 ui.enterSound.addEventListener('click', () => enter(true));
 ui.enterMute.addEventListener('click', () => enter(false));
 
-Promise.all([texturesReady, fontsReady]).then(() => {
-  buildLobbySigns();
+Promise.all([assetsReady, fontsReady]).then(() => {
+  buildSigns();
+  // 폰트가 늦게 로드된 경우 명패 텍스처를 다시 그림
   paintings.forEach((P) => P.layout());
   renderer.compile(scene, camera);
   ui.loader.classList.add('ready');
   ui.pct.textContent = '100%';
   ui.bar.style.transform = 'scaleX(1)';
-  // 작품 페이지에서 돌아온 경우 / 디버그 모드: 바로 입장
   const returning = /work-|gallery/.test(location.hash) || params.has('p');
   if (returning) {
     let snd = false;

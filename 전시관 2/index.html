@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>INDUK EXHIBITION 2026 — 김도연 가상 전시장 (시안 2)</title>
+  <title>INDUK GRADUATION EXHIBITION 2026 — 가상 미술관</title>
 
   <!-- Google Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -21,10 +21,10 @@
 
   <style>
     :root {
-      --bg: #050608;
+      --bg: #14110d;
       --gold: #d9b471;
       --gold-soft: rgba(217, 180, 113, 0.28);
-      --accent: #ff8fc7;
+      --accent: #d9b471;
       --serif: 'Cormorant Garamond', 'Noto Serif KR', serif;
       --sans: 'Noto Sans KR', sans-serif;
       --grot: 'Space Grotesk', 'Noto Sans KR', sans-serif;
@@ -73,7 +73,7 @@
     #progressFill {
       width: 100%;
       height: 100%;
-      background: linear-gradient(90deg, #9fb8ff, var(--gold), #ff8fc7);
+      background: linear-gradient(90deg, #8a6a3a, var(--gold), #f1e3c2);
       transform-origin: 0 50%;
       transform: scaleX(0);
     }
@@ -607,7 +607,7 @@
       <div class="brand-mark">ID</div>
       <div class="brand-meta">
         <strong>INDUK EXHIBITION 2026</strong>
-        <span>202236028 김도연 · VR &amp; GAME SHOWCASE (시안 2)</span>
+        <span>인덕대학교 졸업 작품 전시회 · VIRTUAL GALLERY</span>
       </div>
     </div>
     <div class="hud-controls">
@@ -624,51 +624,51 @@
 
   <!-- Scene 1: 오프닝 로비 캡션 -->
   <section class="stage-caption" data-stop="0">
-    <span class="eyebrow">SCENE 01 · EXHIBITION LOBBY</span>
-    <h1>INDUK VIRTUAL EXHIBITION</h1>
-    <p>인덕대학교 전시관에 오신 것을 환영합니다.<br />마우스 휠을 내리면 빔프로젝터 쇼릴과 내부 액자 갤러리로 이어집니다. 중앙 작품을 클릭하면 바로 입장할 수 있습니다.</p>
+    <span class="eyebrow">THE GRAND HALL · 중앙 홀</span>
+    <h1>INDUK GRADUATION EXHIBITION</h1>
+    <p>인덕대학교 졸업 작품 전시회에 오신 것을 환영합니다.<br />마우스 휠(또는 ↓ 키)로 천천히 걸으며 전시 영상과 학생 작품을 하나씩 감상하세요.</p>
   </section>
 
   <!-- Scene 2: 빔프로젝터 쇼릴 캡션 -->
   <section class="stage-caption" data-stop="1">
-    <span class="eyebrow">SCENE 02 · PROJECTOR SHOWREEL</span>
-    <h2>PROJECTOR SCREEN ON</h2>
-    <p>천장 빔프로젝터에서 작품 영상 모음을 상영합니다. 휠을 더 내리면 스크린 뒤의 갤러리 대문이 열립니다.</p>
+    <span class="eyebrow">EXHIBITION FILM · 전시 영상</span>
+    <h2>NOW SCREENING</h2>
+    <p>금박 액자 속에서 전시 소개 영상이 상영됩니다. 휠을 더 내리면 갤러리 대문이 열립니다.</p>
     <div class="reel-bar">
       <button id="reelPrev" type="button">◀ 이전 영상</button>
-      <span id="nowPlaying">말랑블라스트 — 1분 소개 영상</span>
+      <span id="nowPlaying">전시 소개 영상 01</span>
       <button id="reelNext" type="button">다음 영상 ▶</button>
     </div>
   </section>
 
   <!-- Scene 3: 문 개방 캡션 -->
   <section class="stage-caption" data-stop="2">
-    <span class="eyebrow">SCENE 03 · THE INNER GATE</span>
-    <h2>ENTERING THE INNER GALLERY</h2>
-    <p>전시장 뒷문이 열렸습니다. 휠을 내려 갤러리 안쪽의 작품 액자들을 하나씩 감상하세요.</p>
+    <span class="eyebrow">GALLERY OF WORKS · 작품 회랑</span>
+    <h2>ENTER THE GALLERY</h2>
+    <p>갤러리 문이 열렸습니다. 양쪽 벽에 걸린 작품을 한 점씩 차례로 감상하세요.</p>
   </section>
 
   <!-- Scene 4: 액자 상세 명패 (Placard) -->
   <aside id="placard">
     <div class="pl-top">
-      <span class="pl-no">No.01 / 05</span>
-      <span class="pl-en">MALANG BLAST</span>
+      <span class="pl-no">No.01 / 12</span>
+      <span class="pl-en">UNTITLED WORK</span>
     </div>
-    <h3 class="pl-title">말랑블라스트</h3>
-    <div class="pl-genre">Mobile Casual Puzzle · Unity</div>
+    <h3 class="pl-title">작품 제목</h3>
+    <div class="pl-genre">학생 이름</div>
     <p class="pl-desc"></p>
     <div class="pl-tags"></div>
     <button id="diveBtn" class="pl-dive" type="button">
-      <span>액자 클릭 · 그림 속으로 뛰어들기 (Mario 64 Warp)</span>
+      <span>작품 상세 보기 (액자 클릭 또는 Enter)</span>
       <span>→</span>
     </button>
   </aside>
 
   <!-- Scene 5/엔딩 캡션 -->
-  <section class="stage-caption" data-stop="8">
-    <span class="eyebrow">FINALE · END OF HALL</span>
+  <section class="stage-caption" id="finaleCaption" data-stop="15">
+    <span class="eyebrow">FINALE · 관람 종료</span>
     <h2>THANK YOU FOR VISITING</h2>
-    <p>원하는 작품 액자로 돌아가 클릭하면 마리오 64처럼 그림이 출렁이며 작품 페이지로 이동합니다.</p>
+    <p>오른쪽 목록에서 원하는 작품을 골라 다시 감상하거나, 액자를 클릭해 작품 페이지로 들어갈 수 있습니다.</p>
     <div class="reel-bar">
       <button type="button" data-goto="0">로비 처음으로 ↑</button>
       <button type="button" data-goto="3">첫 번째 액자로 이동</button>
@@ -680,23 +680,23 @@
     <div id="stopLabel">01 — LOBBY</div>
     <div id="scrollHint">
       <span class="wheel-icon"></span>
-      <span>SCROLL WHEEL · CLICK PAINTING TO DIVE IN</span>
+      <span>SCROLL · 휠로 이동 · 액자 클릭으로 작품 보기</span>
     </div>
   </footer>
 
   <!-- 액자 호버 커서 라벨 -->
-  <div id="cursor"><span id="cursorLabel">CLICK · DIVE IN</span></div>
+  <div id="cursor"><span id="cursorLabel">작품 보러 가기</span></div>
 
   <!-- 마리오64 워프 화면 플래시 -->
   <div id="warp"></div>
 
   <!-- 입장 로더 -->
   <div id="loader">
-    <div class="ld-badge">INDUK UNIVERSITY · GRADUATION SHOWCASE</div>
+    <div class="ld-badge">INDUK UNIVERSITY · GRADUATION EXHIBITION 2026</div>
     <h1 class="ld-title">INDUK EXHIBITION HALL</h1>
     <p class="ld-sub">
-      로비 대표 작품 쇼케이스 → 빔프로젝터 영상 상영 → 갤러리 게이트 개방 → 마리오 64 액자 워프<br />
-      202236028 김도연 작품 전시장 (시안 2)
+      중앙 홀 → 전시 영상 → 갤러리 회랑 → 작품 감상<br />
+      인덕대학교 졸업 작품 전시회 · 가상 미술관
     </p>
     <div class="ld-bar-wrap"><div id="loaderBar"></div></div>
     <div id="loaderPct">LOADING...</div>

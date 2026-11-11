@@ -35,7 +35,7 @@ export function createPaintingMaterial(texture, aspect) {
         vUv = uv;
         float h = 0.0;
         // 호버: 잔잔한 물결
-        h += uHoverAmp * 0.035 * ripple(uv, uHover, uTime, 34.0, 7.0, 3.2);
+        h += uHoverAmp * 0.008 * ripple(uv, uHover, uTime, 30.0, 5.0, 4.0);
         // 클릭: 퍼져나가는 파동 (마리오64)
         if (uClickT >= 0.0) {
           vec2 d2 = (uv - uClick) * vec2(uAspect, 1.0);
@@ -66,19 +66,19 @@ export function createPaintingMaterial(texture, aspect) {
         vec3 n = normalize(cross(dFdx(vWorld), dFdy(vWorld)));
         float gx = dFdx(vH) * 60.0;
         float gy = dFdy(vH) * 60.0;
-        vec2 uv = vUv + vec2(gx, gy) * (0.6 + uWarp * 2.0);
+        vec2 uv = vUv + vec2(gx, gy) * (0.25 + uWarp * 1.5);
         vec3 col = texture2D(uMap, clamp(uv, 0.001, 0.999)).rgb;
 
         // 수면처럼 반짝이는 스페큘러
         float spec = pow(clamp(abs(gx) + abs(gy), 0.0, 1.0), 1.6);
-        col += vec3(1.0, 0.97, 0.9) * spec * (0.55 + uWarp * 0.9);
+        col += vec3(1.0, 0.97, 0.9) * spec * uWarp * 0.5;
 
         // 상단 스포트라이트 느낌 (그림 위쪽이 살짝 밝게)
-        float pool = 0.82 + 0.28 * smoothstep(0.0, 1.0, vUv.y) - 0.18 * length(vUv - vec2(0.5, 0.62));
+        float pool = 0.9 + 0.12 * smoothstep(0.0, 1.0, vUv.y) - 0.12 * length(vUv - vec2(0.5, 0.65));
         col *= uLight * pool;
 
         // 워프 순간 빛나며 그림 속으로 빨려들어감
-        col = mix(col, col * 1.6 + vec3(0.08, 0.06, 0.12), uWarp * 0.6);
+        col = mix(col, col * 1.25 + vec3(0.05, 0.04, 0.03), uWarp * 0.5);
         gl_FragColor = vec4(col, 1.0);
         #include <tonemapping_fragment>
         #include <colorspace_fragment>
