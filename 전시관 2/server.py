@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 """
-인덕 전시장(시안2) 로컬 서버
+인덕대학교 졸업 작품 전시회 — 메인 가상 미술관 로컬 서버
  - WebGL 텍스처 / ES 모듈은 file:// 에서 동작하지 않으므로 반드시 http 로 실행해야 합니다.
- - 서버 루트는 상위 폴더(3학년_김도연)입니다. (시안1, 라이어스 바 발표자료 페이지로 이동하기 위함)
+ - 서버 루트는 이 폴더입니다. (전시장에 필요한 파일은 모두 이 폴더 안에 있음)
  - 비디오 탐색/반복 재생을 위해 HTTP Range 요청을 지원합니다.
 """
 import http.server
@@ -15,8 +15,8 @@ import webbrowser
 
 PORT = int(sys.argv[1]) if len(sys.argv) > 1 else 8080
 HERE = os.path.dirname(os.path.abspath(__file__))
-ROOT = os.path.dirname(HERE)
-START = "/" + urllib.parse.quote(os.path.basename(HERE)) + "/index.html"
+ROOT = HERE
+START = "/index.html"
 
 
 class Handler(http.server.SimpleHTTPRequestHandler):
@@ -95,7 +95,7 @@ if __name__ == "__main__":
     url = f"http://localhost:{PORT}{START}"
     with Server(("", PORT), Handler) as httpd:
         print("=" * 60)
-        print(" INDUK EXHIBITION  |  시안2 인덕 전시장")
+        print(" INDUK GRADUATION EXHIBITION 2026  |  가상 미술관")
         print(f" 브라우저에서 열기: {url}")
         print(" 종료: 이 창을 닫거나 Ctrl+C")
         print("=" * 60)
